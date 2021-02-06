@@ -718,7 +718,7 @@ namespace Airtime.Player.Movement
 
         public Quaternion GetGrindDirection()
         {
-            return currentTrackOrientation;
+            return Quaternion.LookRotation(walker.trackDirection * currentTrackVelocity);
         }
 
         public void SetEventFlag(int flag, bool state)

@@ -62,7 +62,7 @@ MonoBehaviour:
       Data: 4|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: Rails.Input.PlayerInputManager, Assembly-CSharp
+      Data: Airtime.Input.PlayerInputManager, Assembly-CSharp
     - Name: 
       Entry: 8
       Data: 
@@ -143,7 +143,7 @@ MonoBehaviour:
       Data: 10|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: Rails.Track.BezierWalker, Assembly-CSharp
+      Data: Airtime.Track.BezierWalker, Assembly-CSharp
     - Name: 
       Entry: 8
       Data: 

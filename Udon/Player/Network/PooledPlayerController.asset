@@ -61,7 +61,7 @@ MonoBehaviour:
       Data: 4|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: Rails.Player.Movement.PlayerController, Assembly-CSharp
+      Data: Airtime.Player.Movement.PlayerController, Assembly-CSharp
     - Name: 
       Entry: 8
       Data: 
