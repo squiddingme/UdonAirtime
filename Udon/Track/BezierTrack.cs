@@ -86,27 +86,123 @@ namespace Airtime.Track
             EnforceControlPointMode(points.Length - 4);
         }
 
+        public void AddCurveAt(int curve)
+        {
+            if (curve >= GetCurveCount())
+            {
+                AddCurve();
+            }
+            else if (curve < 0)
+            {
+                Debug.LogError("Tried to add a curve before 0");
+            }
+            else
+            {
+                int index = (curve * 3) + 1;
+
+                // manual resize up to index then leave a gap
+                Vector3[] resized = new Vector3[points.Length + 3];
+                for (int i = 0; i < index; i++)
+                {
+                    resized[i] = points[i];
+                }
+                // copy the rest
+                for (int i = index + 3; i < resized.Length; i++)
+                {
+                    resized[i] = points[i - 3];
+                }
+                points = resized;
+
+                points[index] = Vector3.Lerp(points[index - 1], points[index + 3], 0.25f);
+                points[index + 1] = Vector3.Lerp(points[index - 1], points[index + 3], 0.5f);
+                points[index + 2] = Vector3.Lerp(points[index - 1], points[index + 3], 0.75f);
+
+                // resize modes
+                int[] resizedModes = new int[modes.Length + 1];
+                for (int i = 0; i < curve; i++)
+                {
+                    resizedModes[i] = modes[i];
+                }
+                // copy the rest
+                for (int i = curve + 1; i < resizedModes.Length; i++)
+                {
+                    resizedModes[i] = modes[i - 1];
+                }
+                modes = resizedModes;
+            }
+        }
+
         public void RemoveCurve()
         {
-            // manual resize because Array.Resize isn't exposed to udon
-            // don't use this at runtime
-            Vector3[] resized = new Vector3[points.Length - 3];
-            for (int i = 0; i < resized.Length; i++)
+            if (GetCurveCount() > 1)
             {
-                resized[i] = points[i];
-            }
-            points = resized;
+                // manual resize because Array.Resize isn't exposed to udon
+                // don't use this at runtime
+                Vector3[] resized = new Vector3[points.Length - 3];
+                for (int i = 0; i < resized.Length; i++)
+                {
+                    resized[i] = points[i];
+                }
+                points = resized;
 
-            // resize modes array
-            // don't use this at runtime
-            int[] resizedModes = new int[modes.Length - 1];
-            for (int i = 0; i < resizedModes.Length; i++)
+                // resize modes array
+                // don't use this at runtime
+                int[] resizedModes = new int[modes.Length - 1];
+                for (int i = 0; i < resizedModes.Length; i++)
+                {
+                    resizedModes[i] = modes[i];
+                }
+                modes = resizedModes;
+
+                EnforceControlPointMode(points.Length - 4);
+            }
+            else
             {
-                resizedModes[i] = modes[i];
+                Debug.LogWarning("Cannot remove first and only curve in a BezierTrack");
             }
-            modes = resizedModes;
+        }
 
-            EnforceControlPointMode(points.Length - 4);
+        public void RemoveCurveAt(int curve)
+        {
+            if (curve >= GetCurveCount())
+            {
+                RemoveCurve();
+            }
+            else if (curve < 0)
+            {
+                Debug.LogError("Tried to remove a curve before 0");
+            }
+            else
+            {
+                int index = (curve * 3) - 1;
+                index = index < 0 ? 0 : index; // why the fuck is math.min not exposed to udon
+
+                // manual resize
+                Vector3[] resized = new Vector3[points.Length - 3];
+                for (int i = 0; i < index; i++)
+                {
+                    resized[i] = points[i];
+                }
+                // copy the rest
+                for (int i = index + 3; i < points.Length; i++)
+                {
+                    resized[i - 3] = points[i];
+                }
+                points = resized;
+
+                // resize modes
+                int[] resizedModes = new int[modes.Length - 1];
+                for (int i = 0; i < curve; i++)
+                {
+                    resizedModes[i] = modes[i];
+                }
+                // copy the rest
+                for (int i = curve + 1; i < modes.Length; i++)
+                {
+                    resizedModes[i - 1] = modes[i];
+                }
+                modes = resizedModes;
+            }
         }
 
         public Vector3 GetPoint(float t)
@@ -349,13 +445,32 @@ namespace Airtime.Track
 
             BezierTrack track = target as BezierTrack;
 
-            GUILayout.Label("Track Setup", EditorStyles.boldLabel);
-            GUILayout.Label(string.Format("Track Curves: {0}", track.GetControlPointCount() / 3));
+            GUILayout.Label(string.Format("Track Setup (Number of Curves: {0})", track.GetControlPointCount() / 3), EditorStyles.boldLabel);
 
             // show selected point if a point is selected
             if (selected >= 0 && selected < track.GetControlPointCount())
             {
+                // buttons to change selection
+                GUILayout.BeginHorizontal();
+                if (selected > 0)
+                {
+                    if (GUILayout.Button("<- Select Previous"))
+                    {
+                        selected--;
+                    }
+                }
                 GUILayout.Label(string.Format("Selected Point: {0}", selected));
+                if (selected < track.GetControlPointCount() - 1)
+                {
+                    if (GUILayout.Button("Select Next ->"))
+                    {
+                        selected++;
+                    }
+                }
+                GUILayout.EndHorizontal();
+
+                UdonSharpGUI.DrawUILine();
+
                 EditorGUI.BeginChangeCheck();
                 Vector3 newPoint = EditorGUILayout.Vector3Field("Position", track.GetControlPoint(selected));
                 if (EditorGUI.EndChangeCheck())
@@ -377,22 +492,44 @@ namespace Airtime.Track
                         track.SetControlPointMode(selected, (int)newMode);
                         EditorUtility.SetDirty(track);
                     }
+
+                    UdonSharpGUI.DrawUILine();
+
+                    // buttons to add curve at selected point
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Insert Curve Here"))
+                    {
+                        Undo.RecordObject(track, "Insert Curve");
+                        track.AddCurveAt((selected + 1) / 3);
+                        EditorUtility.SetDirty(track);
+                    }
+                    // button to remove selected curve
+                    if (GUILayout.Button("Remove Selected Curve"))
+                    {
+                        Undo.RecordObject(track, "Remove Curve");
+                        track.RemoveCurveAt((selected + 1) / 3);
+                        EditorUtility.SetDirty(track);
+                    }
+                    GUILayout.EndHorizontal();
                 }
             }
 
-            if (GUILayout.Button("Add Curve to Track"))
+            UdonSharpGUI.DrawUILine();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Add Curve to End"))
             {
                 Undo.RecordObject(track, "Add Curve");
                 track.AddCurve();
                 EditorUtility.SetDirty(track);
             }
-
-            if (GUILayout.Button("Remove Curve from Track"))
+            if (GUILayout.Button("Remove Curve from End"))
             {
                 Undo.RecordObject(track, "Remove Curve");
                 track.RemoveCurve();
                 EditorUtility.SetDirty(track);
             }
+            GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Reset Track"))
             {
@@ -410,6 +547,7 @@ namespace Airtime.Track
             UdonSharpGUI.DrawUILine();
 
             GUILayout.Label("Track Preparation", EditorStyles.boldLabel);
+            GUILayout.Label("(Required for BezierWalker or collision)", EditorStyles.boldLabel);
             if (track.samplePoints == null)
             {
                 GUILayout.Label("Sample points not generated");
