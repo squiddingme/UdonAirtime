@@ -28,7 +28,7 @@ namespace Airtime.Track
             new Vector3(4f, 0f, 0f)
         };
         [SerializeField] [HideInInspector] private int[] modes = new int[] { MODE_FREE, MODE_FREE };
-        [SerializeField] [HideInInspector] public bool loop = false;
+        [SerializeField] [HideInInspector] private bool loop = false;
 
 #if !COMPILER_UDON // we don't need any of this in-game
         [SerializeField] [HideInInspector] public float samplePointDistance = 0.35f;
@@ -84,6 +84,12 @@ namespace Airtime.Track
             modes = resizedModes;
 
             EnforceControlPointMode(points.Length - 4);
+
+            // enforce loop
+            if (loop)
+            {
+                EnforceControlPointLoop();
+            }
         }
 
         public void AddCurveAt(int curve)
@@ -155,6 +161,14 @@ namespace Airtime.Track
                 modes = resizedModes;
 
                 EnforceControlPointMode(points.Length - 4);
+
+                // enforce loop
+                if (loop)
+                {
+                    points[points.Length - 1] = points[0];
+                    modes[modes.Length - 1] = modes[0];
+                    EnforceControlPointMode(0);
+                }
             }
             else
             {
@@ -201,6 +215,12 @@ namespace Airtime.Track
                     resizedModes[i - 1] = modes[i];
                 }
                 modes = resizedModes;
+
+                // enforce loop
+                if (loop)
+                {
+                    EnforceControlPointLoop();
+                }
             }
         }
 
@@ -296,13 +316,35 @@ namespace Airtime.Track
             if (index % 3 == 0)
             {
                 Vector3 delta = point - points[index];
-                if (index > 0)
+                if (loop && index == 0)
+                {
+                    points[points.Length - 2] += delta;
+                }
+                else if (index > 0)
                 {
                     points[index - 1] += delta;
                 }
-                if (index + 1 < points.Length)
+
+                if (loop && index + 1 == points.Length)
+                {
+                    points[1] += delta;
+                }
+                else if (index + 1 < points.Length)
                 {
                     points[index + 1] += delta;
+                }
+            }
+
+            // enforce a loop
+            if (loop)
+            {
+                if (index <= 0)
+                {
+                    points[points.Length - 1] = points[0];
+                }
+                else if (index >= points.Length - 1)
+                {
+                    points[0] = points[points.Length - 1];
                 }
             }
 
@@ -320,14 +362,26 @@ namespace Airtime.Track
             int modeIndex = (index + 1) / 3;
             modes[modeIndex] = mode;
 
+            if (loop)
+            {
+                if (modeIndex <= 0)
+                {
+                    modes[modes.Length - 1] = mode;
+                }
+                else if (modeIndex >= modes.Length - 1)
+                {
+                    modes[0] = mode;
+                }
+            }
+
             EnforceControlPointMode(index);
         }
 
-        public void EnforceControlPointMode(int index)
+        private void EnforceControlPointMode(int index)
         {
             int modeIndex = (index + 1) / 3;
 
-            if (modes[modeIndex] != MODE_FREE && modeIndex > 0 && modeIndex < modes.Length - 1)
+            if (modes[modeIndex] != MODE_FREE && (loop || (modeIndex > 0 && modeIndex < modes.Length - 1)))
             {
                 int control = modeIndex * 3;
                 int moved;
@@ -336,12 +390,28 @@ namespace Airtime.Track
                 if (index <= control)
                 {
                     moved = control - 1;
+                    if (moved < 0)
+                    {
+                        moved = points.Length - 2;
+                    }
                     enforced = control + 1;
+                    if (enforced >= points.Length)
+                    {
+                        enforced = 1;
+                    }
                 }
                 else
                 {
                     moved = control + 1;
+                    if (moved >= points.Length)
+                    {
+                        moved = 1;
+                    }
                     enforced = control - 1;
+                    if (enforced < 0)
+                    {
+                        enforced = points.Length - 2;
+                    }
                 }
 
                 if (modes[modeIndex] == MODE_ALIGNED)
@@ -353,6 +423,29 @@ namespace Airtime.Track
                     points[enforced] = points[control] + (points[control] - points[moved]);
                 }
             }
+        }
+
+        private void EnforceControlPointLoop()
+        {
+            points[points.Length - 1] = points[0];
+            modes[modes.Length - 1] = modes[0];
+            EnforceControlPointMode(0);
+        }
+
+        public void SetIsLoop(bool value)
+        {
+            loop = value;
+
+            // enforce loop
+            if (loop)
+            {
+                EnforceControlPointLoop();
+            }
+        }
+
+        public bool GetIsLoop()
+        {
+            return loop;
         }
 
         public Transform GetSamplePoint(int index)
@@ -451,19 +544,27 @@ namespace Airtime.Track
             {
                 // buttons to change selection
                 GUILayout.BeginHorizontal();
-                if (selected > 0)
+                if (track.GetIsLoop() || selected > 0)
                 {
                     if (GUILayout.Button("<- Select Previous"))
                     {
                         selected--;
+                        if (selected < 0)
+                        {
+                            selected = track.GetControlPointCount() - (track.GetIsLoop() ? 2 : 1);
+                        }
                     }
                 }
                 GUILayout.Label(string.Format("Selected Point: {0}", selected));
-                if (selected < track.GetControlPointCount() - 1)
+                if (track.GetIsLoop() || selected < track.GetControlPointCount() - 1)
                 {
                     if (GUILayout.Button("Select Next ->"))
                     {
                         selected++;
+                        if (selected >= track.GetControlPointCount() - 1)
+                        {
+                            selected = 0;
+                        }
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -514,6 +615,16 @@ namespace Airtime.Track
             }
 
             UdonSharpGUI.DrawUILine();
+
+            // set if track loops
+            EditorGUI.BeginChangeCheck();
+            bool newLoop = EditorGUILayout.Toggle("Loop", track.GetIsLoop());
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(track, "Set Loop");
+                track.SetIsLoop(newLoop);
+                EditorUtility.SetDirty(track);
+            }
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Add Curve to End"))
@@ -718,12 +829,21 @@ namespace Airtime.Track
 
             Quaternion orientation = Tools.pivotRotation == PivotRotation.Local ? track.transform.rotation : Quaternion.identity;
 
-            Vector3 p0 = PointHandle(track, 0, track.transform, orientation, controlPointSize, Color.white);
+            Vector3 p0 = PointHandle(track, 0, track.transform, orientation, controlPointSize, Color.cyan);
             for (int i = 1; i < track.GetControlPointCount(); i += 3)
             {
                 Vector3 p1 = PointHandle(track, i, track.transform, orientation, handleSize, Color.yellow);
                 Vector3 p2 = PointHandle(track, i + 1, track.transform, orientation, handleSize, Color.yellow);
-                Vector3 p3 = PointHandle(track, i + 2, track.transform, orientation, controlPointSize, Color.white);
+                Vector3 p3;
+                // don't bother drawing a handle for point 3 if the track is a loop
+                if (track.GetIsLoop() && i == track.GetControlPointCount() - 3)
+                {
+                    p3 = track.transform.TransformPoint(track.GetControlPoint(i + 2));
+                }
+                else
+                {
+                    p3 = PointHandle(track, i + 2, track.transform, orientation, controlPointSize, Color.white);
+                }
 
                 // draw bezier
                 Handles.DrawBezier(p0, p3, p1, p2, Color.green, null, 2f);

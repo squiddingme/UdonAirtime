@@ -54,6 +54,18 @@ namespace Airtime.Track
         {
             trackPosition += (trackDirection * time) * Time.deltaTime;
 
+            if (track.GetIsLoop())
+            {
+                if (trackPosition >= 1.0f)
+                {
+                    trackPosition -= 1.0f;
+                }
+                else if (trackPosition <= 0.0f)
+                {
+                    trackPosition += 1.0f;
+                }
+            }
+
             return track.GetPoint(trackPosition);
         }
 
@@ -61,12 +73,24 @@ namespace Airtime.Track
         {
             trackPosition += (trackDirection * GetConstantSpeed(distance)) * Time.deltaTime;
 
+            if (track.GetIsLoop())
+            {
+                if (trackPosition >= track.cachedDistance)
+                {
+                    trackPosition -= track.cachedDistance;
+                }
+                else if (trackPosition <= 0.0f)
+                {
+                    trackPosition += track.cachedDistance;
+                }
+            }
+
             return track.GetPointByDistance(trackPosition);
         }
 
         public bool GetIsDone()
         {
-            if (track.loop)
+            if (track.GetIsLoop())
             {
                 // the ride never ends
                 return false;
