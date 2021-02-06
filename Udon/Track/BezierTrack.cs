@@ -174,8 +174,7 @@ namespace Airtime.Track
             }
             else
             {
-                int index = (curve * 3) - 1;
-                index = index < 0 ? 0 : index; // why the fuck is math.min not exposed to udon
+                int index = Mathf.Max((curve * 3) - 1, 0);
 
                 // manual resize
                 Vector3[] resized = new Vector3[points.Length - 3];
