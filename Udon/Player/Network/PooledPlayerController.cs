@@ -3,9 +3,9 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using Rails.Player.Movement;
+using Airtime.Player.Movement;
 
-namespace Rails.Player.Network
+namespace Airtime.Player.Network
 {
     // PooledPlayerController
     // requires Phasedragon's SimpleObjectPool

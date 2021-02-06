@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 
-namespace Rails.Input
+namespace Airtime.Input
 {
     public class PlayerInputManager : UdonSharpBehaviour
     {

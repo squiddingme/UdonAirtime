@@ -3,10 +3,10 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using Rails.Input;
-using Rails.Track;
+using Airtime.Input;
+using Airtime.Track;
 
-namespace Rails.Player.Movement
+namespace Airtime.Player.Movement
 {
     public class PlayerController : UdonSharpBehaviour
     {

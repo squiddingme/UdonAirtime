@@ -3,14 +3,14 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using Rails.Track;
+using Airtime.Track;
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
 using UnityEditor;
 using UdonSharpEditor;
 #endif
 
-namespace Rails.Player.Movement
+namespace Airtime.Player.Movement
 {
     public class GrindDetector : UdonSharpBehaviour
     {

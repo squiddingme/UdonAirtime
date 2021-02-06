@@ -4,7 +4,7 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
-namespace Rails.Player.Attachment
+namespace Airtime.Player.Attachment
 {
     public class LocalAttachment : UdonSharpBehaviour
     {

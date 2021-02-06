@@ -10,7 +10,7 @@ using UnityEditor;
 using UdonSharpEditor;
 #endif
 
-namespace Rails.Track
+namespace Airtime.Track
 {
     // BezierTrack
     // credit: catlike coding for guide on bezier curves in Unity, which this class is built on
