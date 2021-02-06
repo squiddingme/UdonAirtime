@@ -165,9 +165,7 @@ namespace Airtime.Track
                 // enforce loop
                 if (loop)
                 {
-                    points[points.Length - 1] = points[0];
-                    modes[modes.Length - 1] = modes[0];
-                    EnforceControlPointMode(0);
+                    EnforceControlPointLoop();
                 }
             }
             else
