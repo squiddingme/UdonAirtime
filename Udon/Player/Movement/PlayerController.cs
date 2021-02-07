@@ -283,27 +283,21 @@ namespace Airtime.Player.Movement
             else
             {
                 float inputMagnitude = input3D.magnitude;
+                Vector3 localInput3D = localPlayerRotation * input3D;
 
                 // detect wallriding
-                if (inputMagnitude >= wallRideDeadzone)
+                if (inputMagnitude >= wallRideDeadzone &&
+                    Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
+                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideAcquireAngle)
                 {
-                    Vector3 localInput3D = localPlayerRotation * input3D;
+                    wallJumpTimeRemaining = wallJumpTime;
 
-                    if (Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore))
+                    // if wallriding is enabled, wallride
+                    if (wallRideEnabled)
                     {
+                        SetPlayerState(STATE_WALLRIDE);
 
-                        if (Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideAcquireAngle)
-                        {
-                            wallJumpTimeRemaining = wallJumpTime;
-
-                            // if wallriding is enabled, wallride
-                            if (wallRideEnabled)
-                            {
-                                SetPlayerState(STATE_WALLRIDE);
-
-                                return;
-                            }
-                        }
+                        return;
                     }
                 }
 
@@ -401,48 +395,35 @@ namespace Airtime.Player.Movement
             if (!localPlayer.IsPlayerGrounded())
             {
                 float inputMagnitude = input3D.magnitude;
+                Vector3 localInput3D = localPlayerRotation * input3D;
 
                 // detect wallriding
-                if (inputMagnitude >= wallRideDeadzone)
+                if (inputMagnitude >= wallRideDeadzone &&
+                    Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
+                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideMaintainAngle)
                 {
-                    Vector3 localInput3D = localPlayerRotation * input3D;
-
-                    if (Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore))
+                    // walljump
+                    if (inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
                     {
-                        if (Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideMaintainAngle)
-                        {
-                            // walljump
-                            if (inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
-                            {
-                                localPlayerVelocity = wallHit.normal * wallJumpForce;
-                                localPlayerVelocity.y = wallJumpImpulse;
+                        localPlayerVelocity = wallHit.normal * wallJumpForce;
+                        localPlayerVelocity.y = wallJumpImpulse;
 
-                                bonusJumpTimeRemaining = bonusJumpTime;
-                                ledgeJumpTimeRemaining = 0.0f;
-                                wallJumpCooldownRemaining = wallJumpCooldown;
+                        bonusJumpTimeRemaining = bonusJumpTime;
+                        ledgeJumpTimeRemaining = 0.0f;
+                        wallJumpCooldownRemaining = wallJumpCooldown;
 
-                                localPlayer.SetVelocity(localPlayerVelocity);
+                        localPlayer.SetVelocity(localPlayerVelocity);
 
-                                SetEventFlag(EVENT_JUMP_WALL, true);
+                        SetEventFlag(EVENT_JUMP_WALL, true);
 
-                                SetPlayerState(STATE_AERIAL);
-                            }
-                            // wallride slowdown
-                            else
-                            {
-                                localPlayerVelocity.y = Mathf.MoveTowards(localPlayerVelocity.y, -wallRideFallSpeed, wallRideFriction * Time.deltaTime);
-
-                                localPlayer.SetVelocity(localPlayerVelocity);
-                            }
-                        }
-                        else
-                        {
-                            SetPlayerState(STATE_AERIAL);
-                        }
+                        SetPlayerState(STATE_AERIAL);
                     }
+                    // wallride slowdown
                     else
                     {
-                        SetPlayerState(STATE_AERIAL);
+                        localPlayerVelocity.y = Mathf.MoveTowards(localPlayerVelocity.y, -wallRideFallSpeed, wallRideFriction * Time.deltaTime);
+
+                        localPlayer.SetVelocity(localPlayerVelocity);
                     }
                 }
                 else
