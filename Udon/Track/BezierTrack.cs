@@ -333,6 +333,8 @@ namespace Airtime.Track
                 }
             }
 
+            points[index] = point;
+
             // enforce a loop
             if (loop)
             {
@@ -346,7 +348,6 @@ namespace Airtime.Track
                 }
             }
 
-            points[index] = point;
             EnforceControlPointMode(index);
         }
 
@@ -812,7 +813,7 @@ namespace Airtime.Track
             Vector3 position = track.GetPoint(0);
             for (int i = 1; i < evenSampleCount; i++)
             {
-                float t = (float)i / evenSampleCount;
+                float t = (float)i / (evenSampleCount - 1);
                 Vector3 nextPosition = track.GetPoint(t);
                 track.cachedDistance += Vector3.Distance(position, nextPosition);
                 position = nextPosition;
