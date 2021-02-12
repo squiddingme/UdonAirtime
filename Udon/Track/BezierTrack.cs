@@ -447,10 +447,12 @@ namespace Airtime.Track
             return loop;
         }
 
+#if !COMPILER_UDON
         public Transform GetSamplePoint(int index)
         {
             return samplePoints[index].transform;
         }
+#endif
 
         public float GetSamplePointValue(int index)
         {

@@ -67,7 +67,7 @@ namespace Airtime.Player.Movement
         [Tooltip("If we exceed this distance, deem the player 'stuck' and teleport them to where they're supposed to be")] public float grindTeleportDistance = 10.0f;
 
         [Header("Track Properties")]
-        [Tooltip("Distance from target track position before player is fully snhapped to rail")] public float trackSnapEpsilon = 0.04f;
+        [Tooltip("Distance from target track position before player is fully snapped to rail")] public float trackSnapEpsilon = 0.04f;
         [Tooltip("Speed to snap the player to the target rail position")] public float trackSnapSpeed = 35.0f;
 
         // VRC Stuff
