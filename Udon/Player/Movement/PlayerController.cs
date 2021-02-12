@@ -10,62 +10,65 @@ namespace Airtime.Player.Movement
 {
     public class PlayerController : UdonSharpBehaviour
     {
+        private const float ZERO_GRAVITY = 0.0001f;
+
         [Header("Dependencies")]
         [Tooltip("InputManager component used for rebinding")] public PlayerInputManager inputManager;
         [Tooltip("BezierWalker component required to compute positions when rail grinding")] public BezierWalker walker;
 
-        [Header("Stock Player Properties")]
+        [Header("VRC Player Settings")]
         [Tooltip("Walking speed")] public float walkSpeed = 2.0f;
         [Tooltip("Running speed i.e. speed at maximum analog stick input")] public float runSpeed = 4.0f;
         [Tooltip("Strafing speed")] public float strafeSpeed = 2.0f;
         [Tooltip("Default jump impulse")] public float jumpImpulse = 3.0f;
+        [Tooltip("Gravity strength multiplier")] public float gravityStrength = 1.0f;
 
         [Header("Custom Jump Properties")]
-        [Tooltip("Extra time (in fractions of a second) for variable jump height.")] public float bonusJumpTime = 0.0f;
-        [Tooltip("Extra time after dropping off a platform that we can still jump (coyote time)")] public float ledgeJumpTime = 0.1f;
+        [Tooltip("Extra time (in seconds) the player can hold the jump button for a higher jump")] public float bonusJumpTime = 0.0f;
+        [Tooltip("Extra time after dropping off a platform that the player can still jump (coyote time)")] public float ledgeJumpTime = 0.1f;
 
         [Header("Double Jump Properties")]
         [Tooltip("Allow double jumping")] public bool doubleJumpEnabled = false;
         [Tooltip("Force applied to 2nd jump")] public float doubleJumpImpulse = 3.0f;
 
         [Header("Shared Wall Ride & Jump Properties")]
-        [Tooltip("Size of spherecast to detect walls with")] public float wallDetectionSize = 0.15f;
+        [Tooltip("Size of capsule detection to scan for walls")] public float wallDetectionSize = 0.15f;
         [Tooltip("How far we can be from a wall and still count it as detected")] public float wallDetectionDistance = 0.5f;
-        [Tooltip("Layers you can wall jump off of")] public LayerMask wallLayers;
+        [Tooltip("Layers you can wall jump from")] public LayerMask wallLayers;
 
         [Header("Wall Ride Properties")]
         [Tooltip("Allow wall jumping")] public bool wallRideEnabled = false;
-        [Tooltip("Force the analogue stick must be pushed to count as wallriding")] public float wallRideDeadzone = 0.4f;
-        [Tooltip("Angle of analogue stick from wall that counts as detecting a wall")] public float wallRideAcquireAngle = 70.0f;
-        [Tooltip("Angle of analogue stick from wall that lets us maintain a wall ride, lets the player be sloppy with their analogue stick input")] public float wallRideMaintainAngle = 110.0f;
-        [Tooltip("Decceleration rate of falling speed when we wall ride")] public float wallRideFriction = 10.0f;
-        [Tooltip("Falling speed while wallriding")] public float wallRideFallSpeed = 1.0f;
+        [Tooltip("Amount the analogue stick must be pushed to trigger wallriding")] public float wallRideDeadzone = 0.4f;
+        [Tooltip("Angle of analogue stick from wall that triggers wallriding")] public float wallRideAcquireAngle = 70.0f;
+        [Tooltip("Angle of analogue stick from wall that holds a wallride, lets the player be sloppy with their input")] public float wallRideMaintainAngle = 110.0f;
+        [Tooltip("Decceleration rate of falling speed during a wallride")] public float wallRideFriction = 10.0f;
+        [Tooltip("Maximum falling speed while wallriding")] public float wallRideFallSpeed = 1.0f;
 
         [Header("Wall Jump Properties")]
         [Tooltip("Allow wall jumping. If wall riding is also on, wall jumping will be a part of the wallriding mechanic")] public bool wallJumpEnabled = false;
         [Tooltip("Force to push player away from wall when wall jumping")] public float wallJumpForce = 4.0f;
         [Tooltip("Force applied to wall jump")] public float wallJumpImpulse = 3.0f;
         [Tooltip("How much time after leaving a wall that we're still able to wall jump for")] public float wallJumpTime = 0.2f;
-        [Tooltip("Time before a walljump can happen again, prevents multiple wall jumps off the same wall")] public float wallJumpCooldown = 0.6f;
+        [Tooltip("Time before a walljump can happen again, can be used to slow down wall jumping off the same wall")] public float wallJumpCooldown = 0.6f;
 
         [Header("Grind Properties")]
         [Tooltip("Allow rail grinding")] public bool grindingEnabled = false;
         [Tooltip("Acceleration rate towards maximum grind speed")] public float grindAcceleration = 10.0f;
         [Tooltip("Maximum speed of a grind")] public float grindMaxSpeed = 5.0f;
         [Tooltip("Speed when braking with the analogue stick")] public float grindBrakeSpeed = 2.5f;
-        [Tooltip("Height of jump from rail")] public float grindJumpImpulse = 4.0f;
+        [Tooltip("Jump impulse from rails")] public float grindJumpImpulse = 4.0f;
         [Tooltip("Speed threshold to determine if grind direction is decided by momentum, or direction of player")] public float grindMomentumThreshold = 1.0f;
         [Tooltip("Grace period after jumping before allowing grinding again")] public float grindJumpCooldown = 0.8f;
         [Tooltip("Grace period after reaching the end of a rail before allowing grinding again")] public float grindFallCooldown = 0.2f;
-        [Tooltip("Force of stick before we slow down")] public float grindSlowDeadzone = 0.1f;
-        [Tooltip("Force of stick before we do a turn")] public float grindTurnDeadzone = 0.9f;
+        [Tooltip("Force of analog stick before braking")] public float grindSlowDeadzone = 0.1f;
+        [Tooltip("Force of analog stick before switching directions")] public float grindTurnDeadzone = 0.9f;
         [Tooltip("Wait period before you can turn around, use to prevent network spamming")] public float grindTurnCooldown = 0.2f;
-        [Tooltip("Angle of analog stick direction to change directions")] public float grindTurnAngle = 120.0f;
+        [Tooltip("Angle of analog stick direction to switch directions")] public float grindTurnAngle = 120.0f;
         [Tooltip("If we exceed this distance, deem the player 'stuck' and teleport them to where they're supposed to be")] public float grindTeleportDistance = 10.0f;
 
         [Header("Track Properties")]
-        [Tooltip("Distance from track before we are fully snapped to rail")] public float trackSnapEpsilon = 0.04f;
-        [Tooltip("Speed to snap player to rail")] public float trackSnapSpeed = 35.0f;
+        [Tooltip("Distance from target track position before player is fully snhapped to rail")] public float trackSnapEpsilon = 0.04f;
+        [Tooltip("Speed to snap the player to the target rail position")] public float trackSnapSpeed = 35.0f;
 
         // VRC Stuff
         private VRCPlayerApi localPlayer;
@@ -163,7 +166,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        public void ApplyPlayerProperties()
+        private void ApplyPlayerProperties()
         {
             localPlayer.SetWalkSpeed(walkSpeed);
             localPlayer.SetRunSpeed(runSpeed);
@@ -171,7 +174,7 @@ namespace Airtime.Player.Movement
             localPlayer.SetJumpImpulse(jumpImpulse);
         }
 
-        public void RemovePlayerProperties()
+        private void RemovePlayerProperties()
         {
             localPlayer.SetWalkSpeed(0f);
             localPlayer.SetRunSpeed(0f);
@@ -230,7 +233,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGroundedStart()
         {
             ApplyPlayerProperties();
-            localPlayer.SetGravityStrength(1);
+            localPlayer.SetGravityStrength(gravityStrength);
 
             // set coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
@@ -258,7 +261,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateAerialStart()
         {
             ApplyPlayerProperties();
-            localPlayer.SetGravityStrength(1);
+            localPlayer.SetGravityStrength(gravityStrength);
         }
 
         private void PlayerStateAerialUpdate()
@@ -375,7 +378,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateWallrideStart()
         {
             ApplyPlayerProperties();
-            localPlayer.SetGravityStrength(1);
+            localPlayer.SetGravityStrength(gravityStrength);
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = 0.0f;
@@ -449,7 +452,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateSnappingStart()
         {
             RemovePlayerProperties();
-            localPlayer.SetGravityStrength(0.0001f);
+            localPlayer.SetGravityStrength(ZERO_GRAVITY);
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
@@ -501,7 +504,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGrindingStart()
         {
             RemovePlayerProperties();
-            localPlayer.SetGravityStrength(0.0001f);
+            localPlayer.SetGravityStrength(ZERO_GRAVITY);
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
