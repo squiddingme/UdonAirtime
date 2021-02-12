@@ -43,11 +43,18 @@ namespace Airtime.Track
 
         public float GetConstantSpeed(float distance)
         {
-            // compute the next track position as a constant speed by calculating it using the actual distance given
-            float arcNextTrackPosition = trackPosition + (trackDirection * distance * Time.deltaTime);
-            float multiplier = (distance * Time.deltaTime) / Vector3.Distance(track.GetPointByDistance(trackPosition), track.GetPointByDistance(arcNextTrackPosition));
-            
-            return distance * multiplier;
+            if (distance <= 0.0f)
+            {
+                return 0.0f;
+            }
+            else
+            {
+                // compute the next track position as a constant speed by calculating it using the actual distance given
+                float arcNextTrackPosition = trackPosition + (trackDirection * distance * Time.deltaTime);
+                float multiplier = (distance * Time.deltaTime) / Vector3.Distance(track.GetPointByDistance(trackPosition), track.GetPointByDistance(arcNextTrackPosition));
+
+                return distance * multiplier;
+            }
         }
 
         public Vector3 GetPointAfterTime(float time)
