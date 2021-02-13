@@ -109,7 +109,7 @@ namespace Airtime.Player.Movement
         // STATE_GRINDING
         private float previousTrackPosition = 0.0f;
         private float trackSpeed = 0.0f;
-        private Vector3 currentTrackVelocity = Vector3.zero;
+        private Vector3 currentTrackVelocity = Vector3.forward;
         private Quaternion currentTrackOrientation = Quaternion.identity;
         private float grindingCooldownRemaining = 0.0f;
         private float grindingTurnCooldownRemaining = 0.0f;
