@@ -11,6 +11,7 @@ namespace Airtime.Player.Movement
     public class PlayerController : UdonSharpBehaviour
     {
         private const float ZERO_GRAVITY = 0.0001f;
+        private const float AERIAL_TIME = 0.02f;
 
         [Header("Dependencies")]
         [Tooltip("InputManager component used for rebinding")] public PlayerInputManager inputManager;
@@ -43,6 +44,7 @@ namespace Airtime.Player.Movement
         [Tooltip("Angle of analogue stick from wall that holds a wallride, lets the player be sloppy with their input")] public float wallRideMaintainAngle = 110.0f;
         [Tooltip("Decceleration rate of falling speed during a wallride")] public float wallRideFriction = 10.0f;
         [Tooltip("Maximum falling speed while wallriding")] public float wallRideFallSpeed = 1.0f;
+        [Tooltip("Slope normal that is tolerated as a wallride")] public float wallRideSlopeTolerance = 0.15f;
 
         [Header("Wall Jump Properties")]
         [Tooltip("Allow wall jumping. If wall riding is also on, wall jumping will be a part of the wallriding mechanic")] public bool wallJumpEnabled = false;
@@ -95,6 +97,7 @@ namespace Airtime.Player.Movement
         private bool inputTurned = false;
 
         // STATE_AERIAL
+        private float aerialTime = 0.0f;
         private float bonusJumpTimeRemaining = 0.0f;
         private float ledgeJumpTimeRemaining = 0.0f;
 
@@ -254,7 +257,16 @@ namespace Airtime.Player.Movement
             // switch to aerial state
             if (!localPlayer.IsPlayerGrounded())
             {
-                SetPlayerState(STATE_AERIAL);
+                // this is used because grounded flag is broken on slopes
+                aerialTime += Time.deltaTime;
+                if (aerialTime >= AERIAL_TIME)
+                {
+                    SetPlayerState(STATE_AERIAL);
+                }
+            }
+            else
+            {
+                aerialTime = 0.0f;
             }
         }
 
@@ -291,7 +303,8 @@ namespace Airtime.Player.Movement
                 // detect wallriding
                 if (inputMagnitude >= wallRideDeadzone &&
                     Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
-                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideAcquireAngle)
+                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideAcquireAngle &&
+                    Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
                     wallJumpTimeRemaining = wallJumpTime;
 
@@ -403,7 +416,8 @@ namespace Airtime.Player.Movement
                 // detect wallriding
                 if (inputMagnitude >= wallRideDeadzone &&
                     Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, localInput3D.normalized, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
-                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideMaintainAngle)
+                    Vector3.Angle(localPlayerRotation * input3D, wallHit.normal) > wallRideMaintainAngle &&
+                    Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
                     // walljump
                     if (inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
