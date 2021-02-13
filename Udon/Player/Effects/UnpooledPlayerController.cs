@@ -5,7 +5,7 @@ using VRC.SDKBase;
 using VRC.Udon;
 using Airtime.Player.Movement;
 
-namespace Airtime.Player.Network
+namespace Airtime.Player.Effects
 {
     public class UnpooledPlayerController : UdonSharpBehaviour
     {
