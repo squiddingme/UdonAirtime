@@ -277,6 +277,11 @@ namespace Airtime.Track
                 Debug.LogError(string.Format("BezierTrack {0} does not have a cached distance or BezierTrack is zero length", gameObject.name));
                 return 0.0f;
             }
+            else if (d <= 0.0f)
+            {
+                return 0.0f;
+            }
+
             return d / cachedDistance;
         }
 
@@ -771,7 +776,7 @@ namespace Airtime.Track
                     g.transform.SetParent(track.transform);
                     track.samplePoints[i] = g;
                     // store time value so a collision can also find the right point on the spline
-                    track.samplePointsT[i] = track.GetTimeByDistance(position);
+                    track.samplePointsT[i] = Mathf.Clamp01(track.GetTimeByDistance(position));
 
                     float arcNextTrackPosition = position + track.samplePointDistance;
                     float multiplier = track.samplePointDistance / Vector3.Distance(track.GetPointByDistance(position), track.GetPointByDistance(arcNextTrackPosition));
