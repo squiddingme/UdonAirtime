@@ -1,4 +1,5 @@
 *.meta
 *.unity
+*.prefab
 Assets/*
-Scene/*
+Demo Scene/*

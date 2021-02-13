@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: PlayerController
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: ea2684cbd67929747b0fa7ab5c917193,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: ba8865d502f73ed48b4ec69da8c09d39,
     type: 2}
   udonAssembly: 
   assemblyError: 
@@ -2777,7 +2777,7 @@ MonoBehaviour:
       Data: 174|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: Distance from target track position before player is fully snhapped to
+      Data: Distance from target track position before player is fully snapped to
         rail
     - Name: 
       Entry: 8
