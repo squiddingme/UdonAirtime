@@ -641,7 +641,7 @@ namespace Airtime.Player.Movement
 
         public void GrindRail(BezierTrack track, int samplePoint)
         {
-            if (grindingEnabled)
+            if (grindingEnabled && inputManager.GetJumpIsBound())
             {
                 walker.SetTrack(track);
 

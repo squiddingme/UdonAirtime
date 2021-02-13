@@ -21,6 +21,8 @@ namespace Airtime.Input
         public Text warningText;
         public Text bindingText;
 
+        private bool jumpInputBound = false;
+
         private VRCPlayerApi localPlayer;
         private bool localPlayerCached = false;
 
@@ -52,6 +54,7 @@ namespace Airtime.Input
                                 bindingText.text = jumpInput;
 
                                 rebindingJumpInput = false;
+                                jumpInputBound = true;
                                 break;
                             }
                         }
@@ -72,6 +75,7 @@ namespace Airtime.Input
                                 bindingText.text = jumpInput;
 
                                 rebindingJumpInput = false;
+                                jumpInputBound = true;
                                 break;
                             }
                         }
@@ -88,6 +92,11 @@ namespace Airtime.Input
             warningText.text = "Rebinding, press a button...";
 
             rebindingJumpInput = true;
+        }
+
+        public bool GetJumpIsBound()
+        {
+            return jumpInputBound;
         }
 
         public bool GetJump()
