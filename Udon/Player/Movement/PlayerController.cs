@@ -27,6 +27,7 @@ namespace Airtime.Player.Movement
         [Header("Movement")]
         [Tooltip("Enable accelerating up to maximum speed")] public bool accelerationEnabled = false;
         [Tooltip("Rate to accelerate up to maximum speed.")] public float accelerationRate = 2.0f;
+        [Tooltip("Rate the player loses accelerated speed when they have stopped.")] public float accelerationLossRate = 10.0f;
         [Tooltip("Minimum speed (as percentage of maximum speed) as soon as the player starts moving.")] [Range(0.0f, 1.0f)] public float accelerationMinimum = 0.2f;
 
         [Header("Custom Jump Properties")]
@@ -305,7 +306,7 @@ namespace Airtime.Player.Movement
                     }
                     else
                     {
-                        accelerationMultiplier = Mathf.MoveTowards(accelerationMultiplier, accelerationMinimum, accelerationRate * Time.deltaTime);
+                        accelerationMultiplier = Mathf.MoveTowards(accelerationMultiplier, accelerationMinimum, accelerationLossRate * Time.deltaTime);
                     }
 
                     ApplyPlayerPropertiesWithAcceleration();
