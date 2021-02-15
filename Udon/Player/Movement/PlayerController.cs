@@ -67,6 +67,7 @@ namespace Airtime.Player.Movement
         [Tooltip("Wait period before you can turn around, use to prevent network spamming")] public float grindTurnCooldown = 0.2f;
         [Tooltip("Angle of analog stick direction to switch directions")] public float grindTurnAngle = 120.0f;
         [Tooltip("If we exceed this distance, deem the player 'stuck' and teleport them to where they're supposed to be")] public float grindTeleportDistance = 10.0f;
+        [Tooltip("Grinding temporarily disables the rail game object. Usually desired, since you can use it to disable colliders.")] public bool grindingDisablesRail = true;
 
         [Header("Track Properties")]
         [Tooltip("Distance from target track position before player is fully snapped to rail")] public float trackSnapEpsilon = 0.04f;
@@ -491,6 +492,12 @@ namespace Airtime.Player.Movement
 
                 localPlayer.SetVelocity(localPlayerVelocity);
 
+                // re-enable game object
+                if (grindingDisablesRail)
+                {
+                    walker.track.gameObject.SetActive(true);
+                }
+
                 SetPlayerState(STATE_AERIAL);
             }
             else
@@ -542,6 +549,12 @@ namespace Airtime.Player.Movement
                 bonusJumpTimeRemaining = bonusJumpTime;
 
                 localPlayer.SetVelocity(localPlayerVelocity);
+
+                // re-enable game object
+                if (grindingDisablesRail)
+                {
+                    walker.track.gameObject.SetActive(true);
+                }
 
                 SetPlayerState(STATE_AERIAL);
             }
@@ -610,6 +623,12 @@ namespace Airtime.Player.Movement
                     // use to play a nice sound
                     SetEventFlag(EVENT_GRIND_STOP, true);
 
+                    // re-enable game object
+                    if (grindingDisablesRail)
+                    {
+                        walker.track.gameObject.SetActive(true);
+                    }
+
                     SetPlayerState(STATE_AERIAL);
                 }
                 // move forward using constant speed
@@ -662,6 +681,12 @@ namespace Airtime.Player.Movement
                 else
                 {
                     walker.trackDirection = Quaternion.Angle(track.GetOrientationByDistance(walker.trackPosition), localPlayer.GetRotation()) >= 90.0f ? -1.0f : 1.0f;
+                }
+
+                // disable game object
+                if (grindingDisablesRail)
+                {
+                    track.gameObject.SetActive(false);
                 }
 
                 SetPlayerState(STATE_SNAPPING);
