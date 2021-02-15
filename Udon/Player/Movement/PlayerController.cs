@@ -24,6 +24,11 @@ namespace Airtime.Player.Movement
         [Tooltip("Default jump impulse")] public float jumpImpulse = 3.0f;
         [Tooltip("Gravity strength multiplier")] public float gravityStrength = 1.0f;
 
+        [Header("Movement")]
+        [Tooltip("Enable accelerating up to maximum speed")] public bool accelerationEnabled = false;
+        [Tooltip("Rate to accelerate up to maximum speed.")] public float accelerationRate = 2.0f;
+        [Tooltip("Minimum speed (as percentage of maximum speed) as soon as the player starts moving.")] [Range(0.0f, 1.0f)] public float accelerationMinimum = 0.2f;
+
         [Header("Custom Jump Properties")]
         [Tooltip("Extra time (in seconds) the player can hold the jump button for a higher jump")] public float bonusJumpTime = 0.0f;
         [Tooltip("Extra time after dropping off a platform that the player can still jump (coyote time)")] public float ledgeJumpTime = 0.1f;
@@ -40,8 +45,8 @@ namespace Airtime.Player.Movement
         [Header("Wall Ride Properties")]
         [Tooltip("Allow wall jumping")] public bool wallRideEnabled = false;
         [Tooltip("Amount the analogue stick must be pushed to trigger wallriding")] public float wallRideDeadzone = 0.4f;
-        [Tooltip("Angle of analogue stick from wall that triggers wallriding")] public float wallRideAcquireAngle = 70.0f;
-        [Tooltip("Angle of analogue stick from wall that holds a wallride, lets the player be sloppy with their input")] public float wallRideMaintainAngle = 110.0f;
+        [Tooltip("Angle of analogue stick from wall that triggers wallriding")] [Range(0.0f, 360.0f)] public float wallRideAcquireAngle = 70.0f;
+        [Tooltip("Angle of analogue stick from wall that holds a wallride, lets the player be sloppy with their input")] [Range(0.0f, 360.0f)] public float wallRideMaintainAngle = 110.0f;
         [Tooltip("Decceleration rate of falling speed during a wallride")] public float wallRideFriction = 10.0f;
         [Tooltip("Maximum falling speed while wallriding")] public float wallRideFallSpeed = 1.0f;
         [Tooltip("Slope normal that is tolerated as a wallride")] public float wallRideSlopeTolerance = 0.15f;
@@ -62,10 +67,10 @@ namespace Airtime.Player.Movement
         [Tooltip("Speed threshold to determine if grind direction is decided by momentum, or direction of player")] public float grindMomentumThreshold = 1.0f;
         [Tooltip("Grace period after jumping before allowing grinding again")] public float grindJumpCooldown = 0.8f;
         [Tooltip("Grace period after reaching the end of a rail before allowing grinding again")] public float grindFallCooldown = 0.2f;
-        [Tooltip("Force of analog stick before braking")] public float grindSlowDeadzone = 0.1f;
-        [Tooltip("Force of analog stick before switching directions")] public float grindTurnDeadzone = 0.9f;
+        [Tooltip("Force of analog stick before braking")] [Range(0.0f, 1.1f)] public float grindSlowDeadzone = 0.1f;
+        [Tooltip("Force of analog stick before switching directions")] [Range(0.0f, 1.1f)] public float grindTurnDeadzone = 0.9f;
         [Tooltip("Wait period before you can turn around, use to prevent network spamming")] public float grindTurnCooldown = 0.2f;
-        [Tooltip("Angle of analog stick direction to switch directions")] public float grindTurnAngle = 120.0f;
+        [Tooltip("Angle of analog stick direction to switch directions")] [Range(0.0f, 360.0f)] public float grindTurnAngle = 120.0f;
         [Tooltip("If we exceed this distance, deem the player 'stuck' and teleport them to where they're supposed to be")] public float grindTeleportDistance = 10.0f;
         [Tooltip("Grinding temporarily disables the rail game object. Usually desired, since you can use it to disable colliders.")] public bool grindingDisablesRail = true;
 
@@ -96,6 +101,9 @@ namespace Airtime.Player.Movement
         private bool inputJumped = false;
         private bool inputDoubleJumped = false;
         private bool inputTurned = false;
+
+        // STATE_GROUNDED
+        private float accelerationMultiplier = 0.0f;
 
         // STATE_AERIAL
         private float aerialTime = 0.0f;
@@ -178,6 +186,14 @@ namespace Airtime.Player.Movement
             localPlayer.SetJumpImpulse(jumpImpulse);
         }
 
+        private void ApplyPlayerPropertiesWithAcceleration()
+        {
+            localPlayer.SetWalkSpeed(walkSpeed * accelerationMultiplier);
+            localPlayer.SetRunSpeed(runSpeed * accelerationMultiplier);
+            localPlayer.SetStrafeSpeed(strafeSpeed * accelerationMultiplier);
+            localPlayer.SetJumpImpulse(jumpImpulse);
+        }
+
         private void RemovePlayerProperties()
         {
             localPlayer.SetWalkSpeed(0f);
@@ -251,6 +267,16 @@ namespace Airtime.Player.Movement
 
             // reset double jump
             inputDoubleJumped = false;
+
+            // set acceleration multiplier based on the velocity we arrived at
+            if (accelerationEnabled)
+            {
+                float velocity = localPlayerVelocity.magnitude;
+                if (velocity > 0.0f)
+                {
+                    accelerationMultiplier = Mathf.Clamp(velocity / runSpeed, accelerationMinimum, 1.0f);
+                }
+            }
         }
 
         private void PlayerStateGroundedUpdate()
@@ -268,6 +294,22 @@ namespace Airtime.Player.Movement
             else
             {
                 aerialTime = 0.0f;
+
+                // apply movement acceleration
+                if (accelerationEnabled)
+                {
+                    float inputMagnitude = input3D.magnitude;
+                    if (inputMagnitude > 0.0f)
+                    {
+                        accelerationMultiplier = Mathf.MoveTowards(accelerationMultiplier, 1.0f, accelerationRate * inputMagnitude * Time.deltaTime);
+                    }
+                    else
+                    {
+                        accelerationMultiplier = Mathf.MoveTowards(accelerationMultiplier, accelerationMinimum, accelerationRate * Time.deltaTime);
+                    }
+
+                    ApplyPlayerPropertiesWithAcceleration();
+                }
             }
         }
 
