@@ -270,10 +270,7 @@ namespace Airtime.Player.Movement
             wallJumpCooldownRemaining = 0.0f;
 
             // reset double jump
-            if (groundResetsDoubleJump)
-            {
-                inputDoubleJumped = false;
-            }
+            inputDoubleJumped = !groundResetsDoubleJump;
 
             // set acceleration multiplier based on the velocity we arrived at
             if (accelerationEnabled)
