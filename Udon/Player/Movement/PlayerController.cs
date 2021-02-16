@@ -37,6 +37,9 @@ namespace Airtime.Player.Movement
         [Header("Double Jump Properties")]
         [Tooltip("Allow double jumping")] public bool doubleJumpEnabled = false;
         [Tooltip("Force applied to 2nd jump")] public float doubleJumpImpulse = 3.0f;
+        [Tooltip("If touching the ground resets the double jump.")] public bool groundResetsDoubleJump = true;
+        [Tooltip("If jumping from a wall resets the double jump.")] public bool wallResetsDoubleJump = true;
+        [Tooltip("If jumping from a grind rail resets the double jump.")] public bool grindingResetsDoubleJump = true;
 
         [Header("Shared Wall Ride & Jump Properties")]
         [Tooltip("Size of capsule detection to scan for walls")] public float wallDetectionSize = 0.15f;
@@ -100,7 +103,7 @@ namespace Airtime.Player.Movement
         // Player Input
         private Vector3 input3D = Vector3.zero;
         private bool inputJumped = false;
-        private bool inputDoubleJumped = false;
+        private bool inputDoubleJumped = true;
         private bool inputTurned = false;
 
         // STATE_GROUNDED
@@ -267,7 +270,10 @@ namespace Airtime.Player.Movement
             wallJumpCooldownRemaining = 0.0f;
 
             // reset double jump
-            inputDoubleJumped = false;
+            if (groundResetsDoubleJump)
+            {
+                inputDoubleJumped = false;
+            }
 
             // set acceleration multiplier based on the velocity we arrived at
             if (accelerationEnabled)
@@ -379,7 +385,10 @@ namespace Airtime.Player.Movement
                     wallJumpCooldownRemaining = wallJumpCooldown;
 
                     // walljumping resets the double jump
-                    inputDoubleJumped = false;
+                    if (wallResetsDoubleJump)
+                    {
+                        inputDoubleJumped = false;
+                    }
 
                     SetEventFlag(EVENT_JUMP_WALL, true);
 
@@ -504,7 +513,10 @@ namespace Airtime.Player.Movement
             wallJumpTimeRemaining = wallJumpTime;
 
             // reset double jump
-            inputDoubleJumped = false;
+            if (wallResetsDoubleJump)
+            {
+                inputDoubleJumped = false;
+            }
         }
 
         private void PlayerStateSnappingStart()
@@ -519,7 +531,10 @@ namespace Airtime.Player.Movement
             bonusJumpTimeRemaining = bonusJumpTime;
 
             // reset double jump
-            inputDoubleJumped = false;
+            if (grindingResetsDoubleJump)
+            {
+                inputDoubleJumped = false;
+            }
         }
 
         private void PlayerStateSnappingUpdate()
@@ -577,7 +592,10 @@ namespace Airtime.Player.Movement
             bonusJumpTimeRemaining = bonusJumpTime;
 
             // reset double jump
-            inputDoubleJumped = false;
+            if (grindingDisablesRail)
+            {
+                inputDoubleJumped = false;
+            }
         }
 
         private void PlayerStateGrindingUpdate()
