@@ -26,6 +26,7 @@ namespace Airtime.Player.Movement
 
         [Header("Movement")]
         [Tooltip("Enable accelerating up to maximum speed")] public bool accelerationEnabled = false;
+        [Tooltip("Enable accelerating up to maximum speed while aerial")] public bool airAccelerationEnabled = false;
         [Tooltip("Rate to accelerate up to maximum speed.")] public float accelerationRate = 2.0f;
         [Tooltip("Rate the player loses accelerated speed when they have stopped.")] public float accelerationLossRate = 10.0f;
         [Tooltip("Minimum speed (as percentage of maximum speed) as soon as the player starts moving.")] [Range(0.0f, 1.0f)] public float accelerationMinimum = 0.2f;
@@ -273,7 +274,7 @@ namespace Airtime.Player.Movement
             inputDoubleJumped = !groundResetsDoubleJump;
 
             // set acceleration multiplier based on the velocity we arrived at
-            if (accelerationEnabled)
+            if (!airAccelerationEnabled)
             {
                 float velocity = localPlayerVelocity.magnitude;
                 if (velocity > 0.0f)
@@ -431,6 +432,17 @@ namespace Airtime.Player.Movement
                         // use to play a nice effect
                         SetEventFlag(EVENT_JUMP_DOUBLE, true);
                     }
+                }
+
+                // apply movement acceleration
+                if (airAccelerationEnabled)
+                {
+                    if (inputMagnitude > 0.0f)
+                    {
+                        accelerationMultiplier = Mathf.MoveTowards(accelerationMultiplier, 1.0f, accelerationRate * inputMagnitude * Time.deltaTime);
+                    }
+
+                    ApplyPlayerPropertiesWithAcceleration();
                 }
 
                 // apply our velocity changes
