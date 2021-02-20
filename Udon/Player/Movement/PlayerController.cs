@@ -375,7 +375,14 @@ namespace Airtime.Player.Movement
                 // if wallriding is disabled or we have some time for wall jumping, we do walljump inputs here
                 if (inputManager.GetJumpDown() && wallJumpTimeRemaining > 0.0f && wallJumpCooldownRemaining <= 0.0f)
                 {
-                    localPlayerVelocity = wallHit.normal * wallJumpForce;
+                    float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -wallHit.normal);
+                    float directionality = 0.0f;
+                    if (dirAngle > 0.0f)
+                    {
+                        directionality = Mathf.Clamp01(dirAngle / 120.0f) * wallJumpDirectionality;
+                    }
+
+                    localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
                     localPlayerVelocity.y = wallJumpImpulse;
 
                     bonusJumpTimeRemaining = bonusJumpTime;
