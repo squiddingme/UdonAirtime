@@ -59,6 +59,7 @@ namespace Airtime.Player.Movement
         [Header("Wall Jump Properties")]
         [Tooltip("Allow wall jumping. If wall riding is also on, wall jumping will be a part of the wallriding mechanic")] public bool wallJumpEnabled = false;
         [Tooltip("Force to push player away from wall when wall jumping")] public float wallJumpForce = 4.0f;
+        [Tooltip("Balance between wall jumping in the direction the player is facing (1) and ejecting directly off the wall (0)")] [Range(0.0f, 1.0f)] public float wallJumpDirectionality = 0.7f;
         [Tooltip("Force applied to wall jump")] public float wallJumpImpulse = 3.0f;
         [Tooltip("How much time after leaving a wall that we're still able to wall jump for")] public float wallJumpTime = 0.2f;
         [Tooltip("Time before a walljump can happen again, can be used to slow down wall jumping off the same wall")] public float wallJumpCooldown = 0.6f;
@@ -484,7 +485,14 @@ namespace Airtime.Player.Movement
                     // walljump
                     if (inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
                     {
-                        localPlayerVelocity = wallHit.normal * wallJumpForce;
+                        float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -wallHit.normal);
+                        float directionality = 0.0f;
+                        if (dirAngle > 0.0f)
+                        {
+                            directionality = Mathf.Clamp01(dirAngle / 120.0f) * wallJumpDirectionality;
+                        }
+
+                        localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
                         localPlayerVelocity.y = wallJumpImpulse;
 
                         bonusJumpTimeRemaining = bonusJumpTime;
