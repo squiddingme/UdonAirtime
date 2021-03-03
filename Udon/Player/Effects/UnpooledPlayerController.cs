@@ -59,7 +59,7 @@ namespace Airtime.Player.Effects
 
         public void LateUpdate()
         {
-            if (localPlayerCached)
+            if (localPlayerCached && localPlayer.IsValid())
             {
                 playerState = controller.GetPlayerState();
                 playerScaledVelocity = controller.GetScaledVelocity();

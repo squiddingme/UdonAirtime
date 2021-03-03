@@ -37,7 +37,7 @@ namespace Airtime.Input
 
         public void Update()
         {
-            if (localPlayerCached)
+            if (localPlayerCached && localPlayer.IsValid())
             {
                 if (localPlayer.IsUserInVR())
                 {

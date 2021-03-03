@@ -2,7 +2,7 @@
 An expressive movement system for VRChat. Includes variable jump height, double jumping, wall riding, wall jumping, and rail grinding via an Udon-powered bézier curve implementation.
 
 ## Requirements
-* VRCSDK3
+* VRCSDK3 (Minimum WORLD-2021.02.23.11.40)
 * [UdonSharp](https://github.com/MerlinVR/UdonSharp)
 * (Optional) [Simple Object Pool](https://vrcprefabs.com/browse) (search in Udon Prefabs tab)
 

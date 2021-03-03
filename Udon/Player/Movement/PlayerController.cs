@@ -148,7 +148,7 @@ namespace Airtime.Player.Movement
 
         public void Update()
         {
-            if (localPlayerCached)
+            if (localPlayerCached && localPlayer.IsValid())
             {
                 // reset all event flags
                 eventFlags = 0;
