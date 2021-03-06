@@ -51,6 +51,17 @@ namespace Airtime.Track
             {
                 // compute the next track position as a constant speed by calculating it using the actual distance given
                 float arcNextTrackPosition = trackPosition + (trackDirection * distance * Time.deltaTime);
+                if (track.GetIsLoop())
+                {
+                    if (arcNextTrackPosition < 0.0f)
+                    {
+                        arcNextTrackPosition = track.cachedDistance - Mathf.Abs(arcNextTrackPosition % track.cachedDistance);
+                    }
+                    else if (arcNextTrackPosition > 1.0f)
+                    {
+                        arcNextTrackPosition = arcNextTrackPosition % track.cachedDistance;
+                    }
+                }
                 float multiplier = (distance * Time.deltaTime) / Vector3.Distance(track.GetPointByDistance(trackPosition), track.GetPointByDistance(arcNextTrackPosition));
 
                 return distance * multiplier;
