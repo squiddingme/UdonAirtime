@@ -8,6 +8,7 @@ using Airtime.Track;
 
 namespace Airtime.Player.Movement
 {
+    [DefaultExecutionOrder(-100)]
     public class PlayerController : UdonSharpBehaviour
     {
         private const float ZERO_GRAVITY = 0.0001f;
@@ -745,7 +746,7 @@ namespace Airtime.Player.Movement
 
         public void GrindRail(BezierTrack track, int samplePoint)
         {
-            if (grindingEnabled && inputManager.GetJumpIsBound())
+            if (grindingEnabled)
             {
                 walker.SetTrack(track);
 
