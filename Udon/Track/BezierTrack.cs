@@ -58,13 +58,9 @@ namespace Airtime.Track
         {
             Vector3 point = points[points.Length - 1];
 
-            // manual resize because Array.Resize isn't exposed to udon
-            // don't use this at runtime
+            // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
             Vector3[] resized = new Vector3[points.Length + 3];
-            for (int i = 0; i < points.Length; i++)
-            {
-                resized[i] = points[i];
-            }
+            Array.Copy(points, resized, points.Length);
             points = resized;
 
             point.x += 1f;
@@ -74,13 +70,9 @@ namespace Airtime.Track
             point.x += 1f;
             points[points.Length - 1] = point;
 
-            // resize modes array
-            // don't use this at runtime
+            // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
             int[] resizedModes = new int[modes.Length + 1];
-            for (int i = 0; i < modes.Length; i++)
-            {
-                resizedModes[i] = modes[i];
-            }
+            Array.Copy(modes, resizedModes, modes.Length);
             modes = resizedModes;
 
             EnforceControlPointMode(points.Length - 4);
@@ -106,17 +98,10 @@ namespace Airtime.Track
             {
                 int index = (curve * 3) + 1;
 
-                // manual resize up to index then leave a gap
+                // resize up to index then leave a gap
                 Vector3[] resized = new Vector3[points.Length + 3];
-                for (int i = 0; i < index; i++)
-                {
-                    resized[i] = points[i];
-                }
-                // copy the rest
-                for (int i = index + 3; i < resized.Length; i++)
-                {
-                    resized[i] = points[i - 3];
-                }
+                Array.Copy(points, resized, index);
+                Array.Copy(points, index, resized, index + 3, points.Length - index);
                 points = resized;
 
                 points[index] = Vector3.Lerp(points[index - 1], points[index + 3], 0.25f);
@@ -125,15 +110,8 @@ namespace Airtime.Track
 
                 // resize modes
                 int[] resizedModes = new int[modes.Length + 1];
-                for (int i = 0; i < curve; i++)
-                {
-                    resizedModes[i] = modes[i];
-                }
-                // copy the rest
-                for (int i = curve + 1; i < resizedModes.Length; i++)
-                {
-                    resizedModes[i] = modes[i - 1];
-                }
+                Array.Copy(modes, resizedModes, curve);
+                Array.Copy(modes, curve, resizedModes, curve + 1, modes.Length - curve);
                 modes = resizedModes;
             }
         }
@@ -142,22 +120,14 @@ namespace Airtime.Track
         {
             if (GetCurveCount() > 1)
             {
-                // manual resize because Array.Resize isn't exposed to udon
-                // don't use this at runtime
+                // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
                 Vector3[] resized = new Vector3[points.Length - 3];
-                for (int i = 0; i < resized.Length; i++)
-                {
-                    resized[i] = points[i];
-                }
+                Array.Copy(points, resized, resized.Length);
                 points = resized;
 
-                // resize modes array
-                // don't use this at runtime
+                // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
                 int[] resizedModes = new int[modes.Length - 1];
-                for (int i = 0; i < resizedModes.Length; i++)
-                {
-                    resizedModes[i] = modes[i];
-                }
+                Array.Copy(modes, resizedModes, resizedModes.Length);
                 modes = resizedModes;
 
                 EnforceControlPointMode(points.Length - 4);
@@ -190,28 +160,14 @@ namespace Airtime.Track
 
                 // manual resize
                 Vector3[] resized = new Vector3[points.Length - 3];
-                for (int i = 0; i < index; i++)
-                {
-                    resized[i] = points[i];
-                }
-                // copy the rest
-                for (int i = index + 3; i < points.Length; i++)
-                {
-                    resized[i - 3] = points[i];
-                }
+                Array.Copy(points, resized, index);
+                Array.Copy(points, index + 3, resized, index, points.Length - index - 3);
                 points = resized;
 
                 // resize modes
                 int[] resizedModes = new int[modes.Length - 1];
-                for (int i = 0; i < curve; i++)
-                {
-                    resizedModes[i] = modes[i];
-                }
-                // copy the rest
-                for (int i = curve + 1; i < modes.Length; i++)
-                {
-                    resizedModes[i - 1] = modes[i];
-                }
+                Array.Copy(modes, resizedModes, curve);
+                Array.Copy(modes, curve + 1, resizedModes, curve, modes.Length - curve - 1);
                 modes = resizedModes;
 
                 // enforce loop
