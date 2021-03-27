@@ -779,6 +779,25 @@ namespace Airtime.Player.Movement
             }
         }
 
+        public void UngrindRail(float cooldown)
+        {
+            if (playerState == STATE_GRINDING)
+            {
+                grindingCooldownRemaining = cooldown;
+
+                // use to play a nice sound
+                SetEventFlag(EVENT_GRIND_STOP, true);
+
+                // re-enable game object
+                if (grindingDisablesRail)
+                {
+                    walker.track.gameObject.SetActive(true);
+                }
+
+                SetPlayerState(STATE_AERIAL);
+            }
+        }
+
         public float GetVelocity()
         {
             if (localPlayerCached)

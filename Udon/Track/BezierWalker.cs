@@ -57,7 +57,7 @@ namespace Airtime.Track
                     {
                         arcNextTrackPosition = track.cachedDistance - Mathf.Abs(arcNextTrackPosition % track.cachedDistance);
                     }
-                    else if (arcNextTrackPosition > 1.0f)
+                    else
                     {
                         arcNextTrackPosition = arcNextTrackPosition % track.cachedDistance;
                     }
