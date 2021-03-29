@@ -179,7 +179,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void ApplyPlayerProperties()
+        public void ApplyPlayerProperties()
         {
             localPlayer.SetWalkSpeed(walkSpeed);
             localPlayer.SetRunSpeed(runSpeed);
@@ -187,7 +187,7 @@ namespace Airtime.Player.Movement
             localPlayer.SetJumpImpulse(jumpImpulse);
         }
 
-        private void ApplyPlayerPropertiesWithAcceleration()
+        public void ApplyPlayerPropertiesWithAcceleration()
         {
             localPlayer.SetWalkSpeed(walkSpeed * accelerationMultiplier);
             localPlayer.SetRunSpeed(runSpeed * accelerationMultiplier);
@@ -195,7 +195,7 @@ namespace Airtime.Player.Movement
             localPlayer.SetJumpImpulse(jumpImpulse);
         }
 
-        private void RemovePlayerProperties()
+        public void RemovePlayerProperties()
         {
             localPlayer.SetWalkSpeed(0f);
             localPlayer.SetRunSpeed(0f);
