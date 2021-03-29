@@ -625,6 +625,7 @@ namespace Airtime.Player.Movement
                 // use a cooldown so we don't immediately start grinding from the same position
                 grindingCooldownRemaining = grindJumpCooldown;
 
+                localPlayerVelocity = walker.trackDirection * (walker.track.GetVelocityByDistance(walker.trackPosition).normalized * trackSpeed);
                 localPlayerVelocity.y = grindJumpImpulse;
                 bonusJumpTimeRemaining = bonusJumpTime;
 
@@ -709,6 +710,8 @@ namespace Airtime.Player.Movement
                         walker.track.gameObject.SetActive(true);
                     }
 
+                    localPlayerVelocity = walker.trackDirection * currentTrackVelocity.normalized;
+
                     SetPlayerState(STATE_AERIAL);
                 }
                 // move forward using constant speed
@@ -788,6 +791,8 @@ namespace Airtime.Player.Movement
                     walker.track.gameObject.SetActive(true);
                 }
 
+                localPlayerVelocity = walker.trackDirection * (walker.track.GetVelocityByDistance(walker.trackPosition).normalized * trackSpeed);
+
                 SetPlayerState(STATE_AERIAL);
             }
         }
@@ -796,7 +801,14 @@ namespace Airtime.Player.Movement
         {
             if (localPlayerCached)
             {
-                return localPlayerVelocity.magnitude;
+                if (playerState == STATE_GRINDING)
+                {
+                    return trackSpeed;
+                }
+                else
+                {
+                    return localPlayerVelocity.magnitude;
+                }
             }
             else
             {
@@ -810,7 +822,14 @@ namespace Airtime.Player.Movement
 
             if (velocity > 0.0)
             {
-                return Mathf.Clamp01(velocity / grindMaxSpeed);
+                if (playerState == STATE_GRINDING)
+                {
+                    return Mathf.Clamp01(velocity / grindMaxSpeed);
+                }
+                else
+                {
+                    return Mathf.Clamp01(velocity / runSpeed);
+                }
             }
             else
             {
