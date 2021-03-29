@@ -10,7 +10,9 @@ namespace Airtime.Player.Effects
     public class UnpooledPlayerController : UdonSharpBehaviour
     {
         [Header("Player Controller")]
-        public PlayerController controller;
+        public string playerControllerName = "PlayerController";
+        private PlayerController controller;
+        private bool controllerCached = false;
 
         [Header("Animation")]
         public bool useAnimator;
@@ -55,17 +57,42 @@ namespace Airtime.Player.Effects
             {
                 localPlayerCached = true;
             }
+
+            GameObject search = GameObject.Find(playerControllerName);
+            if (search != null)
+            {
+                Component component = search.GetComponent(typeof(UdonBehaviour));
+                if (component != null)
+                {
+                    controller = (PlayerController)component;
+
+                    Component behaviour = GetComponent(typeof(UdonBehaviour));
+                    controller.RegisterEventHandler((UdonBehaviour)behaviour);
+
+                    controllerCached = true;
+                }
+                else
+                {
+                    Debug.LogError("There was an object named PlayerController in the scene but it has no UdonBehaviour");
+                }
+            }
+            else
+            {
+                Debug.LogError("UnpooledPlayerController could not find a PlayerController in the scene");
+            }
         }
 
         public void LateUpdate()
         {
             if (localPlayerCached && localPlayer.IsValid())
             {
-                playerState = controller.GetPlayerState();
-                playerScaledVelocity = controller.GetScaledVelocity();
+                if (controllerCached)
+                {
+                    playerState = controller.GetPlayerState();
+                    playerScaledVelocity = controller.GetScaledVelocity();
+                }
 
-                transform.position = localPlayer.GetPosition();
-                transform.rotation = localPlayer.GetRotation();
+                transform.SetPositionAndRotation(localPlayer.GetPosition(), localPlayer.GetRotation());
 
                 // set transform of grind particles
                 grindTransform.rotation = controller.GetGrindDirection();
@@ -77,27 +104,32 @@ namespace Airtime.Player.Effects
                     animator.SetBool(animatorWallridingParam, playerState == STATE_WALLRIDE);
                     animator.SetBool(animatorGrindingParam, playerState == STATE_GRINDING);
                 }
-
-                if (controller.GetEventFlag(EVENT_JUMP_DOUBLE))
-                {
-                    doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
-                }
-
-                if (controller.GetEventFlag(EVENT_JUMP_WALL))
-                {
-                    wallJumpSound.PlayOneShot(wallJumpSound.clip);
-                }
-
-                if (controller.GetEventFlag(EVENT_GRIND_START))
-                {
-                    grindStartSound.PlayOneShot(grindStartSound.clip);
-                }
-
-                if (controller.GetEventFlag(EVENT_GRIND_STOP))
-                {
-                    grindStopSound.PlayOneShot(grindStopSound.clip);
-                }
             }
+        }
+
+        public void DoubleJump()
+        {
+            doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
+        }
+
+        public void WallJump()
+        {
+            wallJumpSound.PlayOneShot(wallJumpSound.clip);
+        }
+
+        public void StartGrind()
+        {
+            grindStartSound.PlayOneShot(grindStartSound.clip);
+        }
+
+        public void StopGrind()
+        {
+            grindStopSound.PlayOneShot(grindStopSound.clip);
+        }
+
+        public void SwitchGrindDirection()
+        {
+            grindStopSound.PlayOneShot(grindStopSound.clip);
         }
     }
 }

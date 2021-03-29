@@ -131,12 +131,9 @@ namespace Airtime.Player.Movement
         private float grindingTurnCooldownRemaining = 0.0f;
         private Vector3 lastTarget = Vector3.zero;
 
-        // Events
-        public const int EVENT_JUMP_DOUBLE = 2;
-        public const int EVENT_JUMP_WALL = 4;
-        public const int EVENT_GRIND_START = 8;
-        public const int EVENT_GRIND_STOP = 16;
-        private int eventFlags = 0;
+        // Event Handling
+        private UdonBehaviour eventHandler;
+        private bool eventHandlerCached = false;
 
         public void Start()
         {
@@ -151,9 +148,6 @@ namespace Airtime.Player.Movement
         {
             if (localPlayerCached && localPlayer.IsValid())
             {
-                // reset all event flags
-                eventFlags = 0;
-
                 input3D = inputManager.GetDirection3D();
 
                 localPlayerPosition = localPlayer.GetPosition();
@@ -397,7 +391,7 @@ namespace Airtime.Player.Movement
                         inputDoubleJumped = false;
                     }
 
-                    SetEventFlag(EVENT_JUMP_WALL, true);
+                    SendOptionalCustomEvent("WallJump");
 
                     localPlayer.SetVelocity(localPlayerVelocity);
                 }
@@ -439,7 +433,7 @@ namespace Airtime.Player.Movement
                         inputDoubleJumped = true;
 
                         // use to play a nice effect
-                        SetEventFlag(EVENT_JUMP_DOUBLE, true);
+                        SendOptionalCustomEvent("DoubleJump");
                     }
                 }
 
@@ -509,7 +503,7 @@ namespace Airtime.Player.Movement
 
                         localPlayer.SetVelocity(localPlayerVelocity);
 
-                        SetEventFlag(EVENT_JUMP_WALL, true);
+                        SendOptionalCustomEvent("WallJump");
 
                         SetPlayerState(STATE_AERIAL);
                     }
@@ -600,7 +594,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateSnappingEnd()
         {
             // use to play a nice sound effect
-            SetEventFlag(EVENT_GRIND_START, true);
+            SendOptionalCustomEvent("StartGrind");
 
             grindingTurnCooldownRemaining = 0.0f;
         }
@@ -674,7 +668,7 @@ namespace Airtime.Player.Movement
                             grindingTurnCooldownRemaining = grindTurnCooldown;
 
                             // use to play a nice sound
-                            SetEventFlag(EVENT_GRIND_STOP, true);
+                            SendOptionalCustomEvent("SwitchGrindDirection");
                         }
 
                         inputTurned = true;
@@ -707,7 +701,7 @@ namespace Airtime.Player.Movement
                     grindingCooldownRemaining = grindFallCooldown;
 
                     // use to play a nice sound
-                    SetEventFlag(EVENT_GRIND_STOP, true);
+                    SendOptionalCustomEvent("StopGrind");
 
                     // re-enable game object
                     if (grindingDisablesRail)
@@ -739,7 +733,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGrindingEnd()
         {
             // use this to play a nice effect
-            SetEventFlag(EVENT_GRIND_STOP, true);
+            SendOptionalCustomEvent("StopGrind");
 
             grindingTurnCooldownRemaining = 0.0f;
         }
@@ -786,7 +780,7 @@ namespace Airtime.Player.Movement
                 grindingCooldownRemaining = cooldown;
 
                 // use to play a nice sound
-                SetEventFlag(EVENT_GRIND_STOP, true);
+                SendOptionalCustomEvent("StopGrind");
 
                 // re-enable game object
                 if (grindingDisablesRail)
@@ -849,22 +843,18 @@ namespace Airtime.Player.Movement
             return Quaternion.LookRotation(walker.trackDirection * currentTrackVelocity);
         }
 
-        public void SetEventFlag(int flag, bool state)
+        public void RegisterEventHandler(UdonBehaviour behaviour)
         {
-            if (state)
-            {
-                eventFlags |= flag;
-            }
-            else
-            {
-                eventFlags &= ~flag;
-
-            }
+            eventHandler = behaviour;
+            eventHandlerCached = (eventHandler != null);
         }
-
-        public bool GetEventFlag(int flag)
+        
+        public void SendOptionalCustomEvent(string name)
         {
-            return (eventFlags & flag) == flag;
+            if (eventHandlerCached)
+            {
+                eventHandler.SendCustomEvent(name);
+            }
         }
 
 #if !COMPILER_UDONSHARP

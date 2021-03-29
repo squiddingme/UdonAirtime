@@ -12,7 +12,9 @@ namespace Airtime.Player.Effects
     public class PooledPlayerController : UdonSharpBehaviour
     {
         [Header("Player Controller")]
-        public PlayerController controller;
+        public string playerControllerName = "PlayerController";
+        private PlayerController controller;
+        private bool controllerCached = false;
 
         [Header("Animation")]
         public bool useAnimator;
@@ -67,35 +69,14 @@ namespace Airtime.Player.Effects
             if (ownerCached && localPlayerCached && localPlayer.IsValid())
             {
                 // if owner, use synced variables to display useful information
-                if (owner == localPlayer)
+                if (controllerCached && owner == localPlayer)
                 {
-                    if (controller.GetEventFlag(EVENT_JUMP_DOUBLE))
-                    {
-                        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedDoubleJumped");
-                    }
-
-                    if (controller.GetEventFlag(EVENT_JUMP_WALL))
-                    {
-                        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedWallJumped");
-                    }
-
-                    if (controller.GetEventFlag(EVENT_GRIND_START))
-                    {
-                        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStartGrinding");
-                    }
-
-                    if (controller.GetEventFlag(EVENT_GRIND_STOP))
-                    {
-                        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrinding");
-                    }
-
                     networkPlayerState = controller.GetPlayerState();
                     networkPlayerScaledVelocity = controller.GetScaledVelocity();
                     networkPlayerGrindDirection = controller.GetGrindDirection();
                 }
 
-                transform.position = owner.GetPosition();
-                transform.rotation = owner.GetRotation();
+                transform.SetPositionAndRotation(owner.GetPosition(), owner.GetRotation());
 
                 // set transform of grind particles
                 grindTransform.rotation = networkPlayerGrindDirection;
@@ -116,6 +97,32 @@ namespace Airtime.Player.Effects
             if (owner != null)
             {
                 ownerCached = true;
+
+                if (owner == localPlayer)
+                {
+                    GameObject search = GameObject.Find(playerControllerName);
+                    if (search != null)
+                    {
+                        Component component = search.GetComponent(typeof(UdonBehaviour));
+                        if (component != null)
+                        {
+                            controller = (PlayerController)component;
+
+                            Component behaviour = GetComponent(typeof(UdonBehaviour));
+                            controller.RegisterEventHandler((UdonBehaviour)behaviour);
+
+                            controllerCached = true;
+                        }
+                        else
+                        {
+                            Debug.LogError("There was an object named PlayerController in the scene but it has no UdonBehaviour");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("PooledPlayerController could not find a PlayerController in the scene");
+                    }
+                }
             }
         }
 
@@ -128,22 +135,47 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void NetworkedDoubleJumped()
+        public void DoubleJump()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedDoubleJump");
+        }
+
+        public void NetworkedDoubleJump()
         {
             doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
         }
 
-        public void NetworkedWallJumped()
+        public void WallJump()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedWallJump");
+        }
+
+        public void NetworkedWallJump()
         {
             wallJumpSound.PlayOneShot(wallJumpSound.clip);
         }
 
-        public void NetworkedStartGrinding()
+        public void StartGrind()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStartGrind");
+        }
+
+        public void NetworkedStartGrind()
         {
             grindStartSound.PlayOneShot(grindStartSound.clip);
         }
 
-        public void NetworkedStopGrinding()
+        public void StopGrind()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
+        }
+
+        public void SwitchGrindDirection()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
+        }
+
+        public void NetworkedStopGrind()
         {
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }
