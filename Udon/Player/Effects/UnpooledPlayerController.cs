@@ -40,12 +40,6 @@ namespace Airtime.Player.Effects
         public const int STATE_SNAPPING = 3;
         public const int STATE_GRINDING = 4;
 
-        // Event Flags (same story here)
-        public const int EVENT_JUMP_DOUBLE = 2;
-        public const int EVENT_JUMP_WALL = 4;
-        public const int EVENT_GRIND_START = 8;
-        public const int EVENT_GRIND_STOP = 16;
-
         // Effects
         private int playerState;
         private float playerScaledVelocity;
