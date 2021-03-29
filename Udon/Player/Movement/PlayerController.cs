@@ -741,7 +741,7 @@ namespace Airtime.Player.Movement
             grindingTurnCooldownRemaining = 0.0f;
         }
 
-        public void GrindRail(BezierTrack track, int samplePoint)
+        public void StartGrind(BezierTrack track, int samplePoint)
         {
             if (grindingEnabled)
             {
@@ -776,7 +776,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        public void UngrindRail(float cooldown)
+        public void EndGrind(float cooldown)
         {
             if (playerState == STATE_GRINDING)
             {
@@ -837,12 +837,12 @@ namespace Airtime.Player.Movement
             }
         }
 
-        public bool IsFalling()
+        public bool GetIsFalling()
         {
             return localPlayerVelocity.y <= 0.0f;
         }
 
-        public bool IsGrindingOnCooldown()
+        public bool GetIsGrindingOnCooldown()
         {
             return grindingCooldownRemaining > 0.0f;
         }
@@ -868,7 +868,7 @@ namespace Airtime.Player.Movement
             eventHandlerCached = (eventHandler != null);
         }
         
-        public void SendOptionalCustomEvent(string name)
+        private void SendOptionalCustomEvent(string name)
         {
             if (eventHandlerCached)
             {

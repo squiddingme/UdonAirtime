@@ -31,7 +31,7 @@ namespace Airtime.Player.Movement
         {
             if (other != null)
             {
-                if (other.gameObject.layer == trackLayer && controller.GetPlayerState() == STATE_AERIAL && controller.IsFalling() && !controller.IsGrindingOnCooldown())
+                if (other.gameObject.layer == trackLayer && controller.GetPlayerState() == STATE_AERIAL && controller.GetIsFalling() && !controller.GetIsGrindingOnCooldown())
                 {
                     GameObject g = other.transform.parent.gameObject;
 
@@ -41,7 +41,7 @@ namespace Airtime.Player.Movement
                         int p;
                         if (int.TryParse(other.gameObject.name, out p))
                         {
-                            controller.GrindRail(track, p);
+                            controller.StartGrind(track, p);
                         }
                         else
                         {
