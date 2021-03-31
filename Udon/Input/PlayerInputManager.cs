@@ -16,7 +16,7 @@ namespace Airtime.Input
         private bool inputJump = false;
         private bool inputJumped = false;
 
-        public void Update()
+        public void FixedUpdate()
         {
             inputJumped = false;
         }
