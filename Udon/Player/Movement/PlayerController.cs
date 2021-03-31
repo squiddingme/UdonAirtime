@@ -368,7 +368,7 @@ namespace Airtime.Player.Movement
                 }
 
                 // if wallriding is disabled or we have some time for wall jumping, we do walljump inputs here
-                if (inputManager.GetJumpDown() && wallJumpTimeRemaining > 0.0f && wallJumpCooldownRemaining <= 0.0f)
+                if (wallJumpEnabled && inputManager.GetJumpDown() && wallJumpTimeRemaining > 0.0f && wallJumpCooldownRemaining <= 0.0f)
                 {
                     float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -wallHit.normal);
                     float directionality = 0.0f;
@@ -425,7 +425,7 @@ namespace Airtime.Player.Movement
                 if (inputManager.GetJumpDown() && bonusJumpTimeRemaining <= 0.0f)
                 {
                     // double jump
-                    if (!inputDoubleJumped)
+                    if (doubleJumpEnabled && !inputDoubleJumped)
                     {
                         localPlayerVelocity.y = doubleJumpImpulse;
                         bonusJumpTimeRemaining = bonusJumpTime;
@@ -485,7 +485,7 @@ namespace Airtime.Player.Movement
                     Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
                     // walljump
-                    if (inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
+                    if (wallJumpEnabled && inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
                     {
                         float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -wallHit.normal);
                         float directionality = 0.0f;
@@ -867,7 +867,7 @@ namespace Airtime.Player.Movement
             eventHandler = behaviour;
             eventHandlerCached = (eventHandler != null);
         }
-        
+
         private void SendOptionalCustomEvent(string name)
         {
             if (eventHandlerCached)
