@@ -144,7 +144,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        public void FixedUpdate()
+        public void Update()
         {
             if (localPlayerCached && localPlayer.IsValid())
             {
