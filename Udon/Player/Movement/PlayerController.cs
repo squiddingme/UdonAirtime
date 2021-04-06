@@ -868,7 +868,7 @@ namespace Airtime.Player.Movement
             eventHandlerCached = (eventHandler != null);
         }
 
-        private void SendOptionalCustomEvent(string name)
+        public void SendOptionalCustomEvent(string name)
         {
             if (eventHandlerCached)
             {
