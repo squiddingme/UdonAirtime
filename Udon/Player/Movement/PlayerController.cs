@@ -82,8 +82,7 @@ namespace Airtime.Player.Movement
         [Tooltip("Grinding temporarily disables the rail game object. Usually desired, since you can use it to disable colliders.")] public bool grindingDisablesRail = true;
 
         [Header("Track Properties")]
-        [Tooltip("Distance from target track position before player is fully snapped to rail")] public float trackSnapEpsilon = 0.04f;
-        [Tooltip("Speed to snap the player to the target rail position")] public float trackSnapSpeed = 35.0f;
+        [Tooltip("Time it takes to snap to a rail when first touching it, in seconds")] public float trackSnapTime = 0.08f;
 
         // VRC Stuff
         private VRCPlayerApi localPlayer;
@@ -123,6 +122,7 @@ namespace Airtime.Player.Movement
         private float wallJumpCooldownRemaining = 0.0f;
 
         // STATE_GRINDING
+        private float trackSnapTimer = 0.0f;
         private float previousTrackPosition = 0.0f;
         private float trackSpeed = 0.0f;
         private Vector3 currentTrackVelocity = Vector3.forward;
@@ -579,14 +579,17 @@ namespace Airtime.Player.Movement
             }
             else
             {
-                if (Vector3.Distance(walker.GetPoint(), localPlayerPosition) <= trackSnapEpsilon)
+                trackSnapTimer += Time.deltaTime;
+
+                if (trackSnapTimer > 0.0f)
                 {
-                    SetPlayerState(STATE_GRINDING);
-                }
-                else
-                {
-                    Vector3 target = Vector3.Lerp(localPlayerPosition, walker.GetPoint(), trackSnapSpeed * Time.deltaTime);
+                    Vector3 target = Vector3.Lerp(localPlayerPosition, walker.GetPoint(), trackSnapTimer / trackSnapTime);
                     localPlayer.SetVelocity((target - localPlayerPosition) / Time.deltaTime);
+
+                    if (trackSnapTimer >= trackSnapTime)
+                    {
+                        SetPlayerState(STATE_GRINDING);
+                    }
                 }
             }
         }
@@ -595,6 +598,8 @@ namespace Airtime.Player.Movement
         {
             // use to play a nice sound effect
             SendOptionalCustomEvent("StartGrind");
+
+            trackSnapTimer = 0.0f;
 
             grindingTurnCooldownRemaining = 0.0f;
         }
