@@ -95,11 +95,13 @@ namespace Airtime.Player.Movement
         private Vector3 localPlayerCapsuleB = Vector3.up * 1.5f;
 
         // Player States
-        public const int STATE_GROUNDED = 0;
-        public const int STATE_AERIAL = 1;
-        public const int STATE_WALLRIDE = 2;
-        public const int STATE_SNAPPING = 3;
-        public const int STATE_GRINDING = 4;
+        public const int STATE_STOPPED = 0;
+        public const int STATE_GROUNDED = 1;
+        public const int STATE_AERIAL = 2;
+        public const int STATE_WALLRIDE = 3;
+        public const int STATE_SNAPPING = 4;
+        public const int STATE_GRINDING = 5;
+        public const int STATE_CUSTOM = 6;
         private int playerState = STATE_AERIAL; // start on aerial
 
         // Player Input
@@ -156,6 +158,8 @@ namespace Airtime.Player.Movement
 
                 switch (playerState)
                 {
+                    case STATE_STOPPED:
+                        break;
                     case STATE_GROUNDED:
                         PlayerStateGroundedUpdate();
                         break;
@@ -170,6 +174,8 @@ namespace Airtime.Player.Movement
                         break;
                     case STATE_GRINDING:
                         PlayerStateGrindingUpdate();
+                        break;
+                    case STATE_CUSTOM:
                         break;
                     default:
                         Debug.LogError(string.Format("PlayerController {0} is set to non-existent state {1}", gameObject.name, playerState));
@@ -212,11 +218,12 @@ namespace Airtime.Player.Movement
         {
             switch (playerState)
             {
+                case STATE_STOPPED:
+                    PlayerStateStoppedEnd();
+                    break;
                 case STATE_GROUNDED:
-                    //PlayerStateGroundedEnd();
                     break;
                 case STATE_AERIAL:
-                    //PlayerStateAerialEnd();
                     break;
                 case STATE_WALLRIDE:
                     PlayerStateWallrideEnd();
@@ -233,6 +240,9 @@ namespace Airtime.Player.Movement
 
             switch (playerState)
             {
+                case STATE_STOPPED:
+                    PlayerStateStoppedStart();
+                    break;
                 case STATE_GROUNDED:
                     PlayerStateGroundedStart();
                     break;
@@ -248,6 +258,23 @@ namespace Airtime.Player.Movement
                 case STATE_GRINDING:
                     PlayerStateGrindingStart();
                     break;
+            }
+        }
+
+        private void PlayerStateStoppedStart()
+        {
+            RemovePlayerProperties();
+        }
+
+        private void PlayerStateStoppedEnd()
+        {
+            if (accelerationEnabled)
+            {
+                ApplyPlayerPropertiesWithAcceleration();
+            }
+            else
+            {
+                ApplyPlayerProperties();
             }
         }
 
@@ -798,6 +825,23 @@ namespace Airtime.Player.Movement
 
                 localPlayerVelocity = walker.trackDirection * (walker.track.GetVelocityByDistance(walker.trackPosition).normalized * trackSpeed);
 
+                SetPlayerState(STATE_AERIAL);
+            }
+        }
+
+        public void StartFreeze()
+        {
+            SetPlayerState(STATE_STOPPED);
+        }
+
+        public void StopFreeze()
+        {
+            if (localPlayer.IsPlayerGrounded())
+            {
+                SetPlayerState(STATE_GROUNDED);
+            }
+            else
+            {
                 SetPlayerState(STATE_AERIAL);
             }
         }

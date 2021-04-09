@@ -21,11 +21,13 @@ namespace Airtime.Player.Movement
         [HideInInspector] public int trackLayer = 0;
 
         // Player States (we have to keep a copy here because of udon)
-        public const int STATE_GROUNDED = 0;
-        public const int STATE_AERIAL = 1;
-        public const int STATE_WALLRIDE = 2;
-        public const int STATE_SNAPPING = 3;
-        public const int STATE_GRINDING = 4;
+        public const int STATE_STOPPED = 0;
+        public const int STATE_GROUNDED = 1;
+        public const int STATE_AERIAL = 2;
+        public const int STATE_WALLRIDE = 3;
+        public const int STATE_SNAPPING = 4;
+        public const int STATE_GRINDING = 5;
+        public const int STATE_CUSTOM = 6;
 
         public void OnTriggerStay(Collider other)
         {
