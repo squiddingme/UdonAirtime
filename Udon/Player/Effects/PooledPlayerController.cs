@@ -5,15 +5,19 @@ using VRC.SDKBase;
 using VRC.Udon;
 using Airtime.Player.Movement;
 
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+using UnityEditor;
+using UdonSharpEditor;
+using Airtime;
+#endif
+
 namespace Airtime.Player.Effects
 {
     // PooledPlayerController
     // requires Phasedragon's SimpleObjectPool
     public class PooledPlayerController : UdonSharpBehaviour
     {
-        [Header("Player Controller")]
-        public string playerControllerName = "PlayerController";
-        private PlayerController controller;
+        [HideInInspector] public PlayerController controller;
         private bool controllerCached = false;
 
         [Header("Animation")]
@@ -38,11 +42,13 @@ namespace Airtime.Player.Effects
         private bool localPlayerCached = false;
 
         // Player States (we have to keep a copy here because of udon)
-        public const int STATE_GROUNDED = 0;
-        public const int STATE_AERIAL = 1;
-        public const int STATE_WALLRIDE = 2;
-        public const int STATE_SNAPPING = 3;
-        public const int STATE_GRINDING = 4;
+        public const int STATE_STOPPED = 0;
+        public const int STATE_GROUNDED = 1;
+        public const int STATE_AERIAL = 2;
+        public const int STATE_WALLRIDE = 3;
+        public const int STATE_SNAPPING = 4;
+        public const int STATE_GRINDING = 5;
+        public const int STATE_CUSTOM = 6;
 
         // Networked Effects
         [UdonSynced] private int networkPlayerState;
@@ -55,6 +61,11 @@ namespace Airtime.Player.Effects
             if (localPlayer != null)
             {
                 localPlayerCached = true;
+            }
+
+            if (controller != null)
+            {
+                controllerCached = true;
             }
         }
 
@@ -90,33 +101,13 @@ namespace Airtime.Player.Effects
             owner = Networking.GetOwner(gameObject);
             if (owner != null)
             {
-                ownerCached = true;
-
-                if (owner == localPlayer)
+                if (controller != null)
                 {
-                    GameObject search = GameObject.Find(playerControllerName);
-                    if (search != null)
-                    {
-                        Component component = search.GetComponent(typeof(UdonBehaviour));
-                        if (component != null)
-                        {
-                            controller = (PlayerController)component;
-
-                            Component behaviour = GetComponent(typeof(UdonBehaviour));
-                            controller.RegisterEventHandler((UdonBehaviour)behaviour);
-
-                            controllerCached = true;
-                        }
-                        else
-                        {
-                            Debug.LogError("There was an object named PlayerController in the scene but it has no UdonBehaviour");
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogError("PooledPlayerController could not find a PlayerController in the scene");
-                    }
+                    Component behaviour = GetComponent(typeof(UdonBehaviour));
+                    controller.RegisterEventHandler((UdonBehaviour)behaviour);
                 }
+
+                ownerCached = true;
             }
         }
 
@@ -174,4 +165,39 @@ namespace Airtime.Player.Effects
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }
     }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+    [CustomEditor(typeof(PooledPlayerController))]
+    public class PooledPlayerControllerEditor : Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target)) return;
+
+            PooledPlayerController player = target as PooledPlayerController;
+
+            GUILayout.Label("Player Controller (Required)", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+            PlayerController newController = (PlayerController)EditorGUILayout.ObjectField("Player Controller", player.controller, typeof(PlayerController), true);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(player, "Change Player Controller");
+                player.controller = newController;
+                EditorUtility.SetDirty(player);
+            }
+
+            if (player.controller == null)
+            {
+                SerializedProperty controllerProp = serializedObject.FindProperty("controller");
+                controllerProp.objectReferenceValue = AirtimeEditorUtility.AutoConfigurePlayerController();
+                serializedObject.ApplyModifiedProperties();
+            }
+
+            GUILayout.Label("Script", EditorStyles.boldLabel);
+
+            base.OnInspectorGUI();
+        }
+    }
+#endif
 }

@@ -8,16 +8,16 @@ using Airtime.Track;
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
 using UnityEditor;
 using UdonSharpEditor;
+using Airtime;
 #endif
 
 namespace Airtime.Player.Movement
 {
     public class GrindDetector : UdonSharpBehaviour
     {
-        [Header("Controller")]
-        public PlayerController controller;
+        [HideInInspector] public PlayerController controller;
+        private bool controllerCached = false;
 
-        [Header("Track Properties")]
         [HideInInspector] public int trackLayer = 0;
 
         // Player States (we have to keep a copy here because of udon)
@@ -28,6 +28,14 @@ namespace Airtime.Player.Movement
         public const int STATE_SNAPPING = 4;
         public const int STATE_GRINDING = 5;
         public const int STATE_CUSTOM = 6;
+
+        public void Start()
+        {
+            if (controller != null)
+            {
+                controllerCached = true;
+            }
+        }
 
         public void OnTriggerStay(Collider other)
         {
@@ -66,9 +74,32 @@ namespace Airtime.Player.Movement
         public override void OnInspectorGUI()
         {
             if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target)) return;
-            base.OnInspectorGUI();
 
             GrindDetector detector = target as GrindDetector;
+
+            GUILayout.Label("Player Controller (Required)", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+            PlayerController newController = (PlayerController)EditorGUILayout.ObjectField("Player Controller", detector.controller, typeof(PlayerController), true);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(detector, "Change Player Controller");
+                detector.controller = newController;
+                EditorUtility.SetDirty(detector);
+            }
+
+            if (detector.controller == null)
+            {
+                SerializedProperty controllerProp = serializedObject.FindProperty("controller");
+                controllerProp.objectReferenceValue = AirtimeEditorUtility.AutoConfigurePlayerController();
+                serializedObject.ApplyModifiedProperties();
+            }
+
+            GUILayout.Label("Script", EditorStyles.boldLabel);
+
+            base.OnInspectorGUI();
+
+            GUILayout.Label("Track Detection", EditorStyles.boldLabel);
 
             int newLayer = EditorGUILayout.LayerField("Track Layer", detector.trackLayer);
             if (newLayer != detector.trackLayer)
