@@ -101,7 +101,7 @@ namespace Airtime.Player.Effects
             owner = Networking.GetOwner(gameObject);
             if (owner != null)
             {
-                if (controller != null)
+                if (owner == localPlayer && controller != null)
                 {
                     Component behaviour = GetComponent(typeof(UdonBehaviour));
                     controller.RegisterEventHandler((UdonBehaviour)behaviour);
