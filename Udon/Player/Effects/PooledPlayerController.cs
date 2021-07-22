@@ -71,7 +71,7 @@ namespace Airtime.Player.Effects
 
         public void LateUpdate()
         {
-            if (ownerCached && localPlayerCached && localPlayer.IsValid())
+            if (ownerCached && localPlayerCached && Utilities.IsValid(localPlayer))
             {
                 // if owner, use synced variables to display useful information
                 if (controllerCached && owner == localPlayer)

@@ -25,7 +25,7 @@ namespace Airtime.Player.Attachment
 
         public void Update()
         {
-            if (localPlayerCached && localPlayer.IsValid())
+            if (localPlayerCached && Utilities.IsValid(localPlayer))
             {
                 if (attached)
                 {

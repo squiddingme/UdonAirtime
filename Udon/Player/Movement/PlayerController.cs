@@ -148,7 +148,7 @@ namespace Airtime.Player.Movement
 
         public void Update()
         {
-            if (localPlayerCached && localPlayer.IsValid())
+            if (localPlayerCached && Utilities.IsValid(localPlayer))
             {
                 input3D = inputManager.GetDirection3D();
 

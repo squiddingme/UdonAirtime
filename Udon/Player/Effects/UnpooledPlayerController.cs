@@ -69,7 +69,7 @@ namespace Airtime.Player.Effects
 
         public void LateUpdate()
         {
-            if (localPlayerCached && localPlayer.IsValid())
+            if (localPlayerCached && Utilities.IsValid(localPlayer))
             {
                 if (controllerCached)
                 {
