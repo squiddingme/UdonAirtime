@@ -39,7 +39,7 @@ namespace Airtime.Player.Movement
 
         public void OnTriggerStay(Collider other)
         {
-            if (Utilities.IsValid(other))
+            if (other != null)
             {
                 if (other.gameObject.layer == trackLayer && controller.GetPlayerState() == STATE_AERIAL && controller.GetIsFalling() && !controller.GetIsGrindingOnCooldown())
                 {
