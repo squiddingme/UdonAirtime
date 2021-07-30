@@ -11,6 +11,8 @@ namespace Airtime.Input
     [DefaultExecutionOrder(-50)]
     public class PlayerInputManager : UdonSharpBehaviour
     {
+        private bool inputEnabled = true;
+
         private Vector2 inputMove = new Vector2();
         private Vector3 inputMove3D = new Vector3();
         private bool inputJump = false;
@@ -18,6 +20,12 @@ namespace Airtime.Input
 
         public void Update()
         {
+            inputJumped = false;
+        }
+
+        public void OnDisable()
+        {
+            inputJump = false;
             inputJumped = false;
         }
 
@@ -35,12 +43,12 @@ namespace Airtime.Input
 
         public Vector2 GetDirection()
         {
-            return inputMove;
+            return enabled && inputEnabled ? inputMove : Vector2.zero;
         }
 
         public Vector3 GetDirection3D()
         {
-            return inputMove3D;
+            return enabled && inputEnabled ? inputMove3D : Vector3.zero;
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args)
@@ -51,12 +59,22 @@ namespace Airtime.Input
 
         public bool GetJump()
         {
-            return inputJump;
+            return enabled && inputEnabled && inputJump;
         }
 
         public bool GetJumpDown()
         {
-            return inputJumped;
+            return enabled && inputEnabled && inputJumped;
+        }
+
+        public void StartInput()
+        {
+            inputEnabled = true;
+        }
+
+        public void StopInput()
+        {
+            inputEnabled = false;
         }
     }
 }

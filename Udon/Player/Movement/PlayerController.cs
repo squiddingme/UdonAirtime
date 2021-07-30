@@ -264,6 +264,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateStoppedStart()
         {
             RemovePlayerProperties();
+            localPlayer.SetVelocity(Vector3.zero);
         }
 
         private void PlayerStateStoppedEnd()
