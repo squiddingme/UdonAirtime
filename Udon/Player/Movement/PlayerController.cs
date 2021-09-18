@@ -811,7 +811,7 @@ namespace Airtime.Player.Movement
 
         public void EndGrind(float cooldown)
         {
-            if (playerState == STATE_GRINDING)
+            if (playerState == STATE_SNAPPING || playerState == STATE_GRINDING)
             {
                 grindingCooldownRemaining = cooldown;
 
