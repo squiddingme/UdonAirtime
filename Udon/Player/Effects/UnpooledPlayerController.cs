@@ -13,6 +13,7 @@ using Airtime;
 
 namespace Airtime.Player.Effects
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class UnpooledPlayerController : UdonSharpBehaviour
     {
         [HideInInspector] public PlayerController controller;
@@ -92,27 +93,27 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void DoubleJump()
+        public void _DoubleJump()
         {
             doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
         }
 
-        public void WallJump()
+        public void _WallJump()
         {
             wallJumpSound.PlayOneShot(wallJumpSound.clip);
         }
 
-        public void StartGrind()
+        public void _StartGrind()
         {
             grindStartSound.PlayOneShot(grindStartSound.clip);
         }
 
-        public void StopGrind()
+        public void _StopGrind()
         {
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }
 
-        public void SwitchGrindDirection()
+        public void _SwitchGrindDirection()
         {
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }

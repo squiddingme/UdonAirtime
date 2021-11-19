@@ -6,6 +6,7 @@ using VRC.Udon;
 
 namespace Airtime.Player.Attachment
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class LocalTrackingAttachment : UdonSharpBehaviour
     {
         public bool attached = false;

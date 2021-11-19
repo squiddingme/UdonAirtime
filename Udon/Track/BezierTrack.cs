@@ -14,6 +14,7 @@ namespace Airtime.Track
 {
     // BezierTrack
     // credit: catlike coding for guide on bezier curves in Unity, which this class is built on
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class BezierTrack : UdonSharpBehaviour
     {
         public const int MODE_FREE = 0;

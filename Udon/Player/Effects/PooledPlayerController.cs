@@ -15,6 +15,7 @@ namespace Airtime.Player.Effects
 {
     // PooledPlayerController
     // requires Phasedragon's SimpleObjectPool
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
     public class PooledPlayerController : UdonSharpBehaviour
     {
         [HideInInspector] public PlayerController controller;
@@ -120,7 +121,7 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void DoubleJump()
+        public void _DoubleJump()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedDoubleJump");
         }
@@ -130,7 +131,7 @@ namespace Airtime.Player.Effects
             doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
         }
 
-        public void WallJump()
+        public void _WallJump()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedWallJump");
         }
@@ -140,7 +141,7 @@ namespace Airtime.Player.Effects
             wallJumpSound.PlayOneShot(wallJumpSound.clip);
         }
 
-        public void StartGrind()
+        public void _StartGrind()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStartGrind");
         }
@@ -150,12 +151,12 @@ namespace Airtime.Player.Effects
             grindStartSound.PlayOneShot(grindStartSound.clip);
         }
 
-        public void StopGrind()
+        public void _StopGrind()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
         }
 
-        public void SwitchGrindDirection()
+        public void _SwitchGrindDirection()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
         }

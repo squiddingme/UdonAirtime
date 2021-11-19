@@ -6,6 +6,7 @@ using VRC.Udon;
 
 namespace Airtime.Track
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class BezierWalker : UdonSharpBehaviour
     {
         public BezierTrack track;

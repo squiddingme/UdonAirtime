@@ -9,6 +9,7 @@ using VRC.Udon.Common;
 namespace Airtime.Input
 {
     [DefaultExecutionOrder(-50)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerInputManager : UdonSharpBehaviour
     {
         private bool inputEnabled = true;

@@ -9,6 +9,7 @@ using Airtime.Track;
 namespace Airtime.Player.Movement
 {
     [DefaultExecutionOrder(-100)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerController : UdonSharpBehaviour
     {
         private const float ZERO_GRAVITY = 0.0001f;
@@ -419,7 +420,7 @@ namespace Airtime.Player.Movement
                         inputDoubleJumped = false;
                     }
 
-                    SendOptionalCustomEvent("WallJump");
+                    SendOptionalCustomEvent("_WallJump");
 
                     localPlayer.SetVelocity(localPlayerVelocity);
                 }
@@ -461,7 +462,7 @@ namespace Airtime.Player.Movement
                         inputDoubleJumped = true;
 
                         // use to play a nice effect
-                        SendOptionalCustomEvent("DoubleJump");
+                        SendOptionalCustomEvent("_DoubleJump");
                     }
                 }
 
@@ -531,7 +532,7 @@ namespace Airtime.Player.Movement
 
                         localPlayer.SetVelocity(localPlayerVelocity);
 
-                        SendOptionalCustomEvent("WallJump");
+                        SendOptionalCustomEvent("_WallJump");
 
                         SetPlayerState(STATE_AERIAL);
                     }
@@ -625,7 +626,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateSnappingEnd()
         {
             // use to play a nice sound effect
-            SendOptionalCustomEvent("StartGrind");
+            SendOptionalCustomEvent("_StartGrind");
 
             trackSnapTimer = 0.0f;
 
@@ -702,7 +703,7 @@ namespace Airtime.Player.Movement
                             grindingTurnCooldownRemaining = grindTurnCooldown;
 
                             // use to play a nice sound
-                            SendOptionalCustomEvent("SwitchGrindDirection");
+                            SendOptionalCustomEvent("_SwitchGrindDirection");
                         }
 
                         inputTurned = true;
@@ -735,7 +736,7 @@ namespace Airtime.Player.Movement
                     grindingCooldownRemaining = grindFallCooldown;
 
                     // use to play a nice sound
-                    SendOptionalCustomEvent("StopGrind");
+                    SendOptionalCustomEvent("_StopGrind");
 
                     // re-enable game object
                     if (grindingDisablesRail)
@@ -769,7 +770,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGrindingEnd()
         {
             // use this to play a nice effect
-            SendOptionalCustomEvent("StopGrind");
+            SendOptionalCustomEvent("_StopGrind");
 
             grindingTurnCooldownRemaining = 0.0f;
         }
@@ -816,7 +817,7 @@ namespace Airtime.Player.Movement
                 grindingCooldownRemaining = cooldown;
 
                 // use to play a nice sound
-                SendOptionalCustomEvent("StopGrind");
+                SendOptionalCustomEvent("_StopGrind");
 
                 // re-enable game object
                 if (grindingDisablesRail)

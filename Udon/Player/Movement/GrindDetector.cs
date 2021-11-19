@@ -13,6 +13,7 @@ using Airtime;
 
 namespace Airtime.Player.Movement
 {
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class GrindDetector : UdonSharpBehaviour
     {
         [HideInInspector] public PlayerController controller;
