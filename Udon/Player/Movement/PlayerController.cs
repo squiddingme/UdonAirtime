@@ -46,7 +46,7 @@ namespace Airtime.Player.Movement
 
         [Header("Shared Wall Ride & Jump Properties")]
         [Tooltip("Size of capsule detection to scan for walls")] public float wallDetectionSize = 0.15f;
-        [Tooltip("How far we can be from a wall and still count it as detected")] public float wallDetectionDistance = 0.5f;
+        [Tooltip("How far we can be from a wall and still count it as detected")] public float wallDetectionDistance = 0.525f;
         [Tooltip("Layers you can wall jump from")] public LayerMask wallLayers;
 
         [Header("Wall Ride Properties")]
@@ -122,6 +122,7 @@ namespace Airtime.Player.Movement
 
         // STATE_AERIAL & STATE_WALLRIDE
         private RaycastHit wallHit = new RaycastHit();
+        private RaycastHit lastWallHit = new RaycastHit();
         private float wallJumpTimeRemaining = 0.0f;
         private float wallJumpCooldownRemaining = 0.0f;
         private bool wallJumpInputCooldownActive = false;
@@ -422,14 +423,14 @@ namespace Airtime.Player.Movement
                 // if wallriding is disabled or we have some time for wall jumping, we do walljump inputs here
                 if (wallJumpEnabled && inputManager.GetJumpDown() && wallJumpTimeRemaining > 0.0f && wallJumpCooldownRemaining <= 0.0f)
                 {
-                    float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -wallHit.normal);
+                    float dirAngle = Vector3.Angle(localPlayerRotation * Vector3.forward, -lastWallHit.normal);
                     float directionality = 0.0f;
                     if (dirAngle > 0.0f)
                     {
                         directionality = Mathf.Clamp01(dirAngle / 120.0f) * wallJumpDirectionality;
                     }
 
-                    localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
+                    localPlayerVelocity = Vector3.Lerp(lastWallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
                     localPlayerVelocity.y = wallJumpImpulse;
 
                     bonusJumpTimeRemaining = bonusJumpTime;
@@ -557,6 +558,8 @@ namespace Airtime.Player.Movement
                 if (Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, direction, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
                     Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
+                    lastWallHit = wallHit;
+
                     // walljump
                     if (wallJumpEnabled && inputManager.GetJumpDown() && wallJumpCooldownRemaining <= 0.0f)
                     {
