@@ -405,6 +405,7 @@ namespace Airtime.Player.Movement
                 if ((inputDetection || velocityDetection) && angle > wallRideAcquireAngle && Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
                     wallJumpTimeRemaining = wallJumpTime;
+                    lastWallHit = wallHit;
 
                     // if wallriding is enabled, wallride
                     if (wallRideEnabled)
