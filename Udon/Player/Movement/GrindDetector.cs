@@ -42,7 +42,7 @@ namespace Airtime.Player.Movement
         {
             if (other != null)
             {
-                if (other.gameObject.layer == trackLayer && controller.GetPlayerState() == STATE_AERIAL && controller.GetIsFalling() && !controller.GetIsGrindingOnCooldown())
+                if (other.gameObject.layer == trackLayer && controller.GetPlayerState() == STATE_AERIAL && (!controller.grindingMustFall || controller.GetIsFalling()) && !controller.GetIsGrindingOnCooldown())
                 {
                     GameObject g = other.transform.parent.gameObject;
 

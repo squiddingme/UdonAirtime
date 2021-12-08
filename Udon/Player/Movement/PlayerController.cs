@@ -69,6 +69,7 @@ namespace Airtime.Player.Movement
 
         [Header("Grind Properties")]
         [Tooltip("Allow rail grinding")] public bool grindingEnabled = false;
+        [Tooltip("If enabled, the player must land on top of the rail to grind and cannot jump into it")] public bool grindingMustFall = true;
         [Tooltip("Acceleration rate towards maximum grind speed")] public float grindAcceleration = 10.0f;
         [Tooltip("Maximum speed of a grind")] public float grindMaxSpeed = 5.0f;
         [Tooltip("Speed when braking with the analogue stick")] public float grindBrakeSpeed = 2.5f;
