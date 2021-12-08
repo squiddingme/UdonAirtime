@@ -135,7 +135,6 @@ namespace Airtime.Player.Movement
         private Quaternion currentTrackOrientation = Quaternion.identity;
         private float grindingCooldownRemaining = 0.0f;
         private float grindingTurnCooldownRemaining = 0.0f;
-        private Vector3 lastTarget = Vector3.zero;
 
         // Event Handling
         private UdonBehaviour eventHandler;
@@ -793,17 +792,16 @@ namespace Airtime.Player.Movement
                         walker.track.gameObject.SetActive(true);
                     }
 
-                    localPlayerVelocity = walker.trackDirection * currentTrackVelocity.normalized;
+                    localPlayerVelocity = walker.trackDirection * currentTrackVelocity.normalized * trackSpeed;
+                    localPlayer.SetVelocity(localPlayerVelocity);
 
                     SetPlayerState(STATE_AERIAL);
                 }
                 // move forward using constant speed
                 else
                 {
-                    lastTarget = nextTrackPoint - localPlayer.GetPosition();
-
                     // undeltatime to "teleport"
-                    if (lastTarget.magnitude <= grindTeleportDistance)
+                    if (Vector3.Distance(localPlayer.GetPosition(), nextTrackPoint) <= grindTeleportDistance)
                     {
                         localPlayer.SetVelocity((nextTrackPoint - localPlayerPosition) / Time.deltaTime);
                     }
