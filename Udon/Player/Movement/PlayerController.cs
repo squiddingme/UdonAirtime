@@ -51,6 +51,7 @@ namespace Airtime.Player.Movement
 
         [Header("Wall Ride Properties")]
         [Tooltip("Allow wall jumping")] public bool wallRideEnabled = false;
+        [Tooltip("Use the new automatic wallride controls")] public bool wallRideAutomatically = true;
         [Tooltip("Amount the analogue stick must be pushed to trigger wallriding")] public float wallRideDeadzone = 0.4f;
         [Tooltip("Angle of analogue stick from wall that triggers wallriding")] [Range(0.0f, 360.0f)] public float wallRideAcquireAngle = 70.0f;
         [Tooltip("Angle of analogue stick from wall that holds a wallride, lets the player be sloppy with their input")] [Range(0.0f, 360.0f)] public float wallRideMaintainAngle = 110.0f;
@@ -391,7 +392,7 @@ namespace Airtime.Player.Movement
                     angle = Vector3.Angle(localInput3D, wallHit.normal);
                 }
                 // if there is no input, scan based on velocity
-                else
+                else if (wallRideAutomatically)
                 {
                     float velocityMagnitude = localPlayerVelocity.magnitude;
                     if (velocityMagnitude >= wallRideDeadzone)
@@ -552,12 +553,21 @@ namespace Airtime.Player.Movement
             if (!localPlayer.IsPlayerGrounded())
             {
                 float inputMagnitude = input3D.magnitude;
-                Vector3 localInput3D = localPlayerRotation * input3D;
 
+                Vector3 direction;
                 // when in wallride mode, scan for the wall based on the last position and don't use the inputs or velocity at all
-                Vector3 direction = wallHit.point - (localPlayerPosition + localPlayerCapsuleA);
+                if (wallRideAutomatically)
+                {
+                    direction = wallHit.point - (localPlayerPosition + localPlayerCapsuleA);
+                }
+                // old manual wallride
+                else
+                {
+                    direction = localPlayerRotation * input3D;
+                }
 
-                if (Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, direction, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
+                if ((wallRideAutomatically || Vector3.Angle(direction, wallHit.normal) > wallRideMaintainAngle) &&
+                    Physics.CapsuleCast(localPlayerPosition + localPlayerCapsuleA, localPlayerPosition + localPlayerCapsuleB, wallDetectionSize, direction, out wallHit, wallDetectionDistance, wallLayers, QueryTriggerInteraction.Ignore) &&
                     Mathf.Abs(wallHit.normal.y) <= wallRideSlopeTolerance)
                 {
                     lastWallHit = wallHit;
