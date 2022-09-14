@@ -745,6 +745,7 @@ namespace Airtime.Track
         {
             public string name = "Track";
             public int index = 0;
+            public float[] position;
             public float[] points;
             public string[] modes;
             public bool loop = false;
@@ -758,12 +759,17 @@ namespace Airtime.Track
             try
             {
                 jsonTrack = JsonUtility.FromJson<JsonBezierTrack>(json);
-
                 // check valid points and modes array length
                 if (((jsonTrack.points.Length / 3) - 1) / 3 + 1 != jsonTrack.modes.Length)
                 {
                     jsonTrack.valid = false;
                     throw new Exception(string.Format("Invalid number of points ({0}) or modes ({1})", jsonTrack.points.Length, jsonTrack.modes.Length));
+                }
+
+                if (jsonTrack.position.Length != 3)
+                {
+                    jsonTrack.valid = false;
+                    throw new Exception(string.Format("Position was not exactly 3 numbers"));
                 }
             }
             catch (Exception ex)
@@ -778,6 +784,9 @@ namespace Airtime.Track
         {
             if (jsonTrack.valid)
             {
+                Vector3 position = new Vector3(jsonTrack.position[0], jsonTrack.position[1], jsonTrack.position[2]);
+                track.transform.localPosition = position;
+
                 for (int i = 2; i < jsonTrack.modes.Length; i++)
                 {
                     track.AddCurve();
