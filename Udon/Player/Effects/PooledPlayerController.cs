@@ -14,7 +14,7 @@ using Airtime;
 namespace Airtime.Player.Effects
 {
     // PooledPlayerController
-    // requires Phasedragon's SimpleObjectPool
+    // requires CyanLaser's CyanPlayerObjectPool
     [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
     public class PooledPlayerController : UdonSharpBehaviour
     {
@@ -37,7 +37,7 @@ namespace Airtime.Player.Effects
         public AudioSource grindStopSound;
 
         // VRC Stuff
-        private VRCPlayerApi owner;
+        public VRCPlayerApi Owner;
         private bool ownerCached = false;
         private VRCPlayerApi localPlayer;
         private bool localPlayerCached = false;
@@ -75,14 +75,14 @@ namespace Airtime.Player.Effects
             if (ownerCached && localPlayerCached && Utilities.IsValid(localPlayer))
             {
                 // if owner, use synced variables to display useful information
-                if (controllerCached && owner == localPlayer)
+                if (controllerCached && Owner.isLocal)
                 {
                     networkPlayerState = controller.GetPlayerState();
                     networkPlayerScaledVelocity = controller.GetScaledVelocity();
                     networkPlayerGrindDirection = controller.GetGrindDirection();
                 }
 
-                transform.SetPositionAndRotation(owner.GetPosition(), owner.GetRotation());
+                transform.SetPositionAndRotation(Owner.GetPosition(), Owner.GetRotation());
 
                 // set transform of grind particles
                 grindTransform.rotation = networkPlayerGrindDirection;
@@ -97,12 +97,12 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void UpdateOwner()
+        public void _OnOwnerSet()
         {
-            owner = Networking.GetOwner(gameObject);
-            if (owner != null)
+            //owner = Networking.GetOwner(gameObject);
+            if (Owner != null)
             {
-                if (owner == localPlayer && controller != null)
+                if (Owner.isLocal && controller != null)
                 {
                     Component behaviour = GetComponent(typeof(UdonBehaviour));
                     controller.RegisterEventHandler((UdonBehaviour)behaviour);
@@ -112,13 +112,9 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public override void OnPlayerLeft(VRCPlayerApi player)
+        public void _OnCleanup()
         {
-            if (owner == player)
-            {
-                owner = null;
-                ownerCached = false;
-            }
+            ownerCached = false;
         }
 
         public void _DoubleJump()
