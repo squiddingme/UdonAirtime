@@ -10,6 +10,8 @@ An expressive movement system for VRChat. Includes variable jump height, double 
 ## Download
 Get it in the [releases](https://github.com/squiddingme/UdonAirtime/releases).
 
+Also, check [here](https://github.com/squiddingme/UdonAirtimeBlenderExport) for a Blender addon that converts bézier curves from Blender to UdonAirtime.
+
 ## Basic Setup
 1. Import VRChat SDK3 to project (or use the [Creator Companion](https://vrchat.com/home/download))
 2. Don't forget to let the SDK set up your layers and collision matrix
