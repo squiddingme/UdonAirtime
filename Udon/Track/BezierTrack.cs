@@ -6,6 +6,7 @@ using VRC.SDKBase;
 using VRC.Udon;
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
+using System.IO;
 using UnityEditor;
 using UdonSharpEditor;
 #endif
@@ -313,6 +314,11 @@ namespace Airtime.Track
             EnforceControlPointMode(index);
         }
 
+        public void SetControlPointRaw(int index, Vector3 point)
+        {
+            points[index] = point;
+        }
+
         public int GetControlPointMode(int index)
         {
             return modes[(index + 1) / 3];
@@ -617,6 +623,43 @@ namespace Airtime.Track
                 }
             }
 
+            if (GUILayout.Button("Import Track from .json File"))
+            {
+                string path = EditorUtility.OpenFilePanel("Import Track from .json File", "", "json");
+                if (path.Length > 0)
+                {
+                    string text = "";
+                    try
+                    {
+                        text = File.ReadAllText(path);
+                    }
+                    catch (DirectoryNotFoundException ex)
+                    {
+                        Debug.LogError(ex.Message);
+                    }
+
+                    if (text.Length > 0)
+                    {
+                        JsonBezierTrack jsonTrack = SerializeFromJson(text);
+                        if (jsonTrack.valid)
+                        {
+                            Undo.RecordObject(track, "Import Track from .json File");
+
+                            track.Reset();
+                            BuildFromJson(track, jsonTrack);
+
+                            EditorUtility.SetDirty(track);
+
+                            // clear sample points that are no longer relevant
+                            if (track.samplePoints != null && track.samplePointsT != null)
+                            {
+                                ClearSamplePoints(track);
+                            }
+                        }
+                    }
+                }
+            }
+
             UdonSharpGUI.DrawUILine();
 
             GUILayout.Label("Track Preparation", EditorStyles.boldLabel);
@@ -694,6 +737,61 @@ namespace Airtime.Track
                 {
                     ClearSamplePoints(track);
                 }
+            }
+        }
+
+        [Serializable]
+        public class JsonBezierTrack
+        {
+            public string name = "Track";
+            public int index = 0;
+            public float[] points;
+            public string[] modes;
+            public bool loop = false;
+            public bool valid = true;
+        }
+
+        public JsonBezierTrack SerializeFromJson(string json)
+        {
+            JsonBezierTrack jsonTrack = new JsonBezierTrack();
+
+            try
+            {
+                jsonTrack = JsonUtility.FromJson<JsonBezierTrack>(json);
+
+                // check valid points and modes array length
+                if (((jsonTrack.points.Length / 3) - 1) / 3 + 1 != jsonTrack.modes.Length)
+                {
+                    jsonTrack.valid = false;
+                    throw new Exception(string.Format("Invalid number of points ({0}) or modes ({1})", jsonTrack.points.Length, jsonTrack.modes.Length));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(ex.Message);
+            }
+
+            return jsonTrack;
+        }
+
+        public void BuildFromJson(BezierTrack track, JsonBezierTrack jsonTrack)
+        {
+            if (jsonTrack.valid)
+            {
+                for (int i = 2; i < jsonTrack.modes.Length; i++)
+                {
+                    track.AddCurve();
+                }
+
+                for (int i = 0; i < jsonTrack.points.Length; i += 3)
+                {
+                    Vector3 point = new Vector3(jsonTrack.points[i], jsonTrack.points[i + 1], jsonTrack.points[i + 2]);
+                    track.SetControlPointRaw(i / 3, point);
+                }
+            }
+            else
+            {
+                Debug.LogError("Tried to import from an invalid Bezier Track .json object");
             }
         }
 
