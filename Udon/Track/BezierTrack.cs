@@ -492,6 +492,7 @@ namespace Airtime.Track
     [CustomEditor(typeof(BezierTrack))]
     public class BezierTrackEditor : Editor
     {
+        private const string importVersion = "dev";
         private const int evenSampleCount = 2000;
 
         private const float controlPointSize = 0.08f;
@@ -743,6 +744,7 @@ namespace Airtime.Track
         [Serializable]
         public class JsonBezierTrack
         {
+            public string version;
             public string name = "Track";
             public int index = 0;
             public float[] position;
@@ -759,13 +761,19 @@ namespace Airtime.Track
             try
             {
                 jsonTrack = JsonUtility.FromJson<JsonBezierTrack>(json);
+                // check format version
+                if (jsonTrack.version != importVersion)
+                {
+                    jsonTrack.valid = false;
+                    throw new Exception(string.Format("Exported format ({0}) is not the expected version ({1})", jsonTrack.version, importVersion));
+                }
                 // check valid points and modes array length
                 if (((jsonTrack.points.Length / 3) - 1) / 3 + 1 != jsonTrack.modes.Length)
                 {
                     jsonTrack.valid = false;
                     throw new Exception(string.Format("Invalid number of points ({0}) or modes ({1})", jsonTrack.points.Length, jsonTrack.modes.Length));
                 }
-
+                // check valid position
                 if (jsonTrack.position.Length != 3)
                 {
                     jsonTrack.valid = false;
