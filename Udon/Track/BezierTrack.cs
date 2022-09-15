@@ -90,6 +90,11 @@ namespace Airtime.Track
             Array.Copy(modes, resizedModes, modes.Length);
             modes = resizedModes;
 
+            // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
+            float[] resizedRolls = new float[rolls.Length + 1];
+            Array.Copy(rolls, resizedRolls, rolls.Length);
+            rolls = resizedRolls;
+
             EnforceControlPointMode(points.Length - 4);
 
             // enforce loop
@@ -128,6 +133,12 @@ namespace Airtime.Track
                 Array.Copy(modes, resizedModes, curve);
                 Array.Copy(modes, curve, resizedModes, curve + 1, modes.Length - curve);
                 modes = resizedModes;
+
+                // resize rolls
+                float[] resizedRolls = new float[rolls.Length + 1];
+                Array.Copy(rolls, resizedRolls, curve);
+                Array.Copy(rolls, curve, resizedRolls, curve + 1, rolls.Length - curve);
+                rolls = resizedRolls;
             }
         }
 
@@ -144,6 +155,11 @@ namespace Airtime.Track
                 int[] resizedModes = new int[modes.Length - 1];
                 Array.Copy(modes, resizedModes, resizedModes.Length);
                 modes = resizedModes;
+
+                // resize array with Array.Copy -- seems like Array.Resize isn't supported in udon
+                float[] resizedRolls = new float[rolls.Length - 1];
+                Array.Copy(rolls, resizedRolls, resizedRolls.Length);
+                rolls = resizedRolls;
 
                 EnforceControlPointMode(points.Length - 4);
 
@@ -184,6 +200,12 @@ namespace Airtime.Track
                 Array.Copy(modes, resizedModes, curve);
                 Array.Copy(modes, curve + 1, resizedModes, curve, modes.Length - curve - 1);
                 modes = resizedModes;
+
+                // resize rolls
+                float[] resizedRolls = new float[rolls.Length - 1];
+                Array.Copy(rolls, resizedRolls, curve);
+                Array.Copy(rolls, curve + 1, resizedRolls, curve, rolls.Length - curve - 1);
+                rolls = resizedRolls;
 
                 // enforce loop
                 if (loop)
@@ -567,7 +589,7 @@ namespace Airtime.Track
     [CustomEditor(typeof(BezierTrack))]
     public class BezierTrackEditor : Editor
     {
-        private const string importVersion = "dev";
+        private const string importVersion = "dev-2";
         private const int evenSampleCount = 2000;
 
         private const float controlPointSize = 0.08f;
@@ -839,6 +861,7 @@ namespace Airtime.Track
             public int index = 0;
             public float[] position;
             public float[] points;
+            public float[] rolls;
             public string[] modes;
             public bool loop = false;
             public bool valid = true;
@@ -862,6 +885,12 @@ namespace Airtime.Track
                 {
                     jsonTrack.valid = false;
                     throw new Exception(string.Format("Invalid number of points ({0}) or modes ({1})", jsonTrack.points.Length, jsonTrack.modes.Length));
+                }
+                // check valid points and rolls array length
+                if (((jsonTrack.points.Length / 3) - 1) / 3 + 1 != jsonTrack.rolls.Length)
+                {
+                    jsonTrack.valid = false;
+                    throw new Exception(string.Format("Invalid number of points ({0}) or rolls ({1})", jsonTrack.points.Length, jsonTrack.rolls.Length));
                 }
                 // check valid position
                 if (jsonTrack.position.Length != 3)
@@ -910,6 +939,11 @@ namespace Airtime.Track
                             track.SetControlPointMode(i * 3, BezierTrack.MODE_FREE);
                             break;
                     }
+                }
+
+                for (int i = 0; i < jsonTrack.rolls.Length; i++)
+                {
+                    track.SetControlPointRoll(i * 3, jsonTrack.rolls[i]);
                 }
             }
             else
