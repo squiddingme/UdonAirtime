@@ -609,7 +609,7 @@ namespace Airtime.Track
                     if (GUILayout.Button("Select Next ->"))
                     {
                         selected++;
-                        if (selected >= track.GetControlPointCount())
+                        if (selected >= track.GetControlPointCount() - (track.GetIsLoop() ? 1 : 0))
                         {
                             selected = 0;
                         }
