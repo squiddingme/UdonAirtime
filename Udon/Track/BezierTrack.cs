@@ -805,6 +805,22 @@ namespace Airtime.Track
                     Vector3 point = new Vector3(jsonTrack.points[i], jsonTrack.points[i + 1], jsonTrack.points[i + 2]);
                     track.SetControlPointRaw(i / 3, point);
                 }
+
+                for (int i = 0; i < jsonTrack.modes.Length; i++)
+                {
+                    switch (jsonTrack.modes[i])
+                    {
+                        case "FREE":
+                            track.SetControlPointMode(i * 3, BezierTrack.MODE_FREE);
+                            break;
+                        case "ALIGNED":
+                            track.SetControlPointMode(i * 3, BezierTrack.MODE_ALIGNED);
+                            break;
+                        default:
+                            track.SetControlPointMode(i * 3, BezierTrack.MODE_FREE);
+                            break;
+                    }
+                }
             }
             else
             {
