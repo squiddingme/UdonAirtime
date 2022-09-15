@@ -15,7 +15,6 @@ namespace Airtime.Track
         public bool rotating = true;
 
         public float speed = 0.5f;
-        public float roll = 90f;
 
         private Vector3 position;
         private Quaternion rotation;
