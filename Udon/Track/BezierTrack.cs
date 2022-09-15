@@ -531,7 +531,7 @@ namespace Airtime.Track
                     if (GUILayout.Button("Select Next ->"))
                     {
                         selected++;
-                        if (selected >= track.GetControlPointCount() - 1)
+                        if (selected >= track.GetControlPointCount())
                         {
                             selected = 0;
                         }
