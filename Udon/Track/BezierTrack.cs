@@ -29,6 +29,7 @@ namespace Airtime.Track
             new Vector3(3f, 0f, 0f),
             new Vector3(4f, 0f, 0f)
         };
+        [SerializeField] [HideInInspector] private float[] rolls = new float[] { 0f, 0f };
         [SerializeField] [HideInInspector] private int[] modes = new int[] { MODE_FREE, MODE_FREE };
         [SerializeField] [HideInInspector] private bool loop = false;
 
@@ -53,7 +54,19 @@ namespace Airtime.Track
                 new Vector3(4f, 0f, 0f)
             };
 
+            rolls = new float[] { 0f, 0f };
+
             modes = new int[] { 0, 0 };
+        }
+
+        public void ResetRolls()
+        {
+            rolls = new float[(points.Length - 1) / 3 + 1];
+        }
+
+        public void ResetModes()
+        {
+            modes = new int[(points.Length - 1) / 3 + 1];
         }
 
         public void AddCurve()
@@ -218,6 +231,34 @@ namespace Airtime.Track
             }
         }
 
+        public Quaternion GetRotation(float t)
+        {
+            // backwards compatibility so you can upgrade projects
+            if (rolls.Length != modes.Length)
+            {
+                return Quaternion.LookRotation(GetVelocity(t));
+            }
+            else
+            {
+                Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
+                Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
+                return Quaternion.LookRotation(GetVelocity(t)) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+            }
+        }
+
+        public Quaternion GetRotationByDistance(float d)
+        {
+            if (cachedDistance <= 0.0f)
+            {
+                Debug.LogError(string.Format("BezierTrack {0} does not have a cached distance or BezierTrack is zero length", gameObject.name));
+                return Quaternion.identity;
+            }
+            else
+            {
+                return GetRotation(d / cachedDistance);
+            }
+        }
+
         public float GetDistanceByTime(float t)
         {
             if (cachedDistance <= 0.0f)
@@ -317,6 +358,29 @@ namespace Airtime.Track
         public void SetControlPointRaw(int index, Vector3 point)
         {
             points[index] = point;
+        }
+
+        public float GetControlPointRoll(int index)
+        {
+            return rolls[(index + 1) / 3];
+        }
+
+        public void SetControlPointRoll(int index, float roll)
+        {
+            int rollIndex = (index + 1) / 3;
+            rolls[rollIndex] = roll;
+
+            if (loop)
+            {
+                if (rollIndex <= 0)
+                {
+                    rolls[rolls.Length - 1] = roll;
+                }
+                else if (rollIndex >= rolls.Length - 1)
+                {
+                    rolls[0] = roll;
+                }
+            }
         }
 
         public int GetControlPointMode(int index)
@@ -479,6 +543,17 @@ namespace Airtime.Track
                    6f * t1 * t * (p2 - p1) +
                    3f * t * t * (p3 - p2);
         }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+        public void CheckVersion()
+        {
+            if (rolls.Length != modes.Length)
+            {
+                Debug.LogWarning(string.Format("{0} was an older pre-2.0 curve with no control point rolls and has been automatically fixed", name));
+                ResetRolls();
+            }
+        }
+#endif
     }
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
@@ -506,6 +581,9 @@ namespace Airtime.Track
             if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target)) return;
 
             BezierTrack track = target as BezierTrack;
+
+            // fix rolls if this is an older curve from pre-2.0
+            track.CheckVersion();
 
             GUILayout.Label(string.Format("Track Setup (Number of Curves: {0})", track.GetControlPointCount() / 3), EditorStyles.boldLabel);
 
@@ -552,6 +630,17 @@ namespace Airtime.Track
 
                 if (selected % 3 == 0)
                 {
+                    // rolls
+                    float roll = track.GetControlPointRoll(selected);
+                    EditorGUI.BeginChangeCheck();
+                    float newRoll = EditorGUILayout.FloatField("Roll", roll);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(track, "Change Roll");
+                        track.SetControlPointRoll(selected, newRoll);
+                        EditorUtility.SetDirty(track);
+                    }
+
                     // enums in udon when
                     BezierMode mode = (BezierMode)track.GetControlPointMode(selected);
                     EditorGUI.BeginChangeCheck();
