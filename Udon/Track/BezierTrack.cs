@@ -525,7 +525,7 @@ namespace Airtime.Track
             return (points.Length - 1) / 3;
         }
 
-        private Vector3 ComputePoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        public Vector3 ComputePoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
         {
             t = Mathf.Clamp01(t);
             float t1 = 1f - t;
@@ -535,7 +535,7 @@ namespace Airtime.Track
                    t * t * t * p3;
         }
 
-        private Vector3 ComputeTangent(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        public Vector3 ComputeTangent(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
         {
             t = Mathf.Clamp01(t);
             float t1 = 1f - t;
@@ -573,6 +573,7 @@ namespace Airtime.Track
         private const float controlPointSize = 0.08f;
         private const float handleSize = 0.06f;
         private const float selectionSize = 0.1f;
+        private const float rollSize = 0.25f;
 
         private static int selected = -1;
 
@@ -1035,6 +1036,14 @@ namespace Airtime.Track
                 Handles.color = Color.yellow;
                 Handles.DrawLine(p0, p1);
                 Handles.DrawLine(p2, p3);
+
+                // draw roll
+                Handles.color = Color.cyan;
+                Vector3 velocity = track.transform.TransformPoint(track.ComputeTangent(p0, p1, p2, p3, 0.0f)) - track.transform.position;
+                Quaternion look = Quaternion.LookRotation(velocity);
+                Handles.DrawWireArc(p0, look * Vector3.forward, look * Vector3.up, 360f, rollSize);
+                Quaternion roll = Quaternion.Euler(0f, 0f, track.GetControlPointRoll(i));
+                Handles.DrawLine(p0, p0 + (look * (roll * Vector3.up) * rollSize));
 
                 p0 = p3;
             }
