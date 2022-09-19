@@ -296,9 +296,15 @@ namespace Airtime.Track
                 Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
                 Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
 
-                int index = Mathf.RoundToInt(sampledNormals.Length * Mathf.Clamp01(t));
-                index = Mathf.Clamp(index, 0, sampledNormals.Length - 1);
-                return Quaternion.LookRotation(GetVelocity(t), sampledNormals[index]) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+                // interpolate cached normals
+                float value = sampledNormals.Length * Mathf.Clamp01(t);
+                float whole = Mathf.Floor(value);
+
+                int index1 = Mathf.Clamp((int)whole, 0, sampledNormals.Length - 1);
+                int index2 = Mathf.Clamp(index1 + 1, 0, sampledNormals.Length - 1);
+                Vector3 sample = Vector3.Lerp(sampledNormals[index1], sampledNormals[index2], value - whole);
+
+                return Quaternion.LookRotation(GetVelocity(t), sample) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
             }
         }
 
