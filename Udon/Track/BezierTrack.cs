@@ -1132,11 +1132,6 @@ namespace Airtime.Track
 
                 track.sampledNormals[0] = Vector3.up;
 
-                float position = 0.0f;
-                float arcNextTrackPosition = position + track.sampledNormalsDistance;
-                float multiplier = track.sampledNormalsDistance / Vector3.Distance(track.GetPointByDistance(position), track.GetPointByDistance(arcNextTrackPosition));
-                position += track.sampledNormalsDistance * multiplier;
-
                 for (int i = 1; i < count - 1; i++)
                 {
                     track.sampledNormals[i] = track.GetNormal((float)i / count, track.sampledNormals[i - 1]);
