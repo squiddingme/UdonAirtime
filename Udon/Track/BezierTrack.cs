@@ -44,6 +44,7 @@ namespace Airtime.Track
 
 #if !COMPILER_UDON // we don't need any of this in-game either
         [SerializeField] [HideInInspector] public float sampledNormalsDistance = 0.5f;
+        [SerializeField] [HideInInspector] public float sampledNormalsStraightening = 1.5f;
 #endif
         [SerializeField] [HideInInspector] public Vector3[] sampledNormals;
 
@@ -924,6 +925,15 @@ namespace Airtime.Track
                 EditorUtility.SetDirty(track);
             }
 
+            EditorGUI.BeginChangeCheck();
+            float newNormalStraightening = EditorGUILayout.FloatField("Straightening", track.sampledNormalsStraightening);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(track, "Change Cached Normal Straightening");
+                track.sampledNormalsStraightening = Mathf.Max(newNormalStraightening, 1.0f);
+                EditorUtility.SetDirty(track);
+            }
+
             if (GUILayout.Button("1. Generate Cached Normals"))
             {
                 // clear sampled normals
@@ -1134,7 +1144,9 @@ namespace Airtime.Track
 
                 for (int i = 1; i < count - 1; i++)
                 {
-                    track.sampledNormals[i] = track.GetNormal((float)i / count, track.sampledNormals[i - 1]);
+                    Vector3 smoothed = track.sampledNormals[i - 1];
+                    smoothed.y = smoothed.y * track.sampledNormalsStraightening;
+                    track.sampledNormals[i] = track.GetNormal((float)i / count, smoothed);
                 }
 
                 EditorUtility.SetDirty(track);
