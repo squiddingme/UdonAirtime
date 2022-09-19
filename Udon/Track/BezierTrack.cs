@@ -42,6 +42,11 @@ namespace Airtime.Track
 #endif
         [SerializeField] [HideInInspector] public float[] samplePointsT;
 
+#if !COMPILER_UDON // we don't need any of this in-game either
+        [SerializeField] [HideInInspector] public float sampledNormalsDistance = 0.5f;
+#endif
+        [SerializeField] [HideInInspector] public Vector3[] sampledNormals;
+
         [SerializeField] [HideInInspector] public float cachedDistance = 0.0f;
 
         public void Reset()
@@ -253,6 +258,25 @@ namespace Airtime.Track
             }
         }
 
+        public Vector3 GetNormal(float t, Vector3 up)
+        {
+            int index = GetCurveIndex(t);
+            return ComputeNormal(points[index], points[index + 1], points[index + 2], points[index + 3], up, GetCurveValue(t));
+        }
+
+        public Vector3 GetNormalByDistance(float d, Vector3 up)
+        {
+            if (cachedDistance <= 0.0f)
+            {
+                Debug.LogError(string.Format("BezierTrack {0} does not have a cached distance or BezierTrack is zero length", gameObject.name));
+                return Vector3.zero;
+            }
+            else
+            {
+                return GetNormal(d / cachedDistance, up);
+            }
+        }
+
         public Quaternion GetRotation(float t)
         {
             // backwards compatibility so you can upgrade projects
@@ -260,11 +284,21 @@ namespace Airtime.Track
             {
                 return Quaternion.LookRotation(GetVelocity(t));
             }
-            else
+            // y-up roll calculation if there are no cached normals
+            else if (sampledNormals == null)
             {
                 Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
                 Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
                 return Quaternion.LookRotation(GetVelocity(t)) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+            }
+            else
+            {
+                Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
+                Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
+
+                int index = Mathf.RoundToInt(sampledNormals.Length * Mathf.Clamp01(t));
+                index = Mathf.Clamp(index, 0, sampledNormals.Length - 1);
+                return Quaternion.LookRotation(GetVelocity(t), sampledNormals[index]) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
             }
         }
 
@@ -518,6 +552,11 @@ namespace Airtime.Track
             return GetDistanceByTime(samplePointsT[index]);
         }
 
+        public Vector3 GetSampledNormal(int index)
+        {
+            return sampledNormals[index];
+        }
+
         public int GetCurveIndex(float t)
         {
             if (t >= 1.0f)
@@ -566,6 +605,19 @@ namespace Airtime.Track
                    3f * t * t * (p3 - p2);
         }
 
+        public Vector3 ComputeBinormal(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 up, float t)
+        {
+            Vector3 tangent = ComputeTangent(p0, p1, p2, p3, t);
+            return Vector3.Cross(up, tangent).normalized;
+        }
+
+        public Vector3 ComputeNormal(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 up, float t)
+        {
+            Vector3 tangent = ComputeTangent(p0, p1, p2, p3, t);
+            Vector3 binormal = ComputeBinormal(p0, p1, p2, p3, up, t);
+            return Vector3.Cross(tangent, binormal).normalized;
+        }
+
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
         public void CheckVersion()
         {
@@ -596,6 +648,7 @@ namespace Airtime.Track
         private const float handleSize = 0.06f;
         private const float selectionSize = 0.1f;
         private const float rollSize = 0.25f;
+        private const float normalSize = 0.35f;
 
         private static int selected = -1;
 
@@ -851,6 +904,42 @@ namespace Airtime.Track
                     ClearSamplePoints(track);
                 }
             }
+
+            UdonSharpGUI.DrawUILine();
+            GUILayout.Label("Walker Preparation", EditorStyles.boldLabel);
+            GUILayout.Label("(Required for rotation, e.g. rollercoasters, not used by grind rails)", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+            float newNormalDistance = EditorGUILayout.FloatField("Distance Between Normals", track.sampledNormalsDistance);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(track, "Change Cached Normal Distance");
+                track.sampledNormalsDistance = newNormalDistance;
+                EditorUtility.SetDirty(track);
+            }
+
+            if (GUILayout.Button("1. Generate Cached Normals"))
+            {
+                // clear sampled normals
+                if (track.sampledNormals != null)
+                {
+                    ClearSampledNormals(track);
+                }
+
+                GenerateSampledNormals(track);
+            }
+
+            if (GUILayout.Button("Clear Cached Normals"))
+            {
+                if (track.sampledNormals == null)
+                {
+                    Debug.LogWarning("There are no cached normals.");
+                }
+                else
+                {
+                    ClearSampledNormals(track);
+                }
+            }
         }
 
         [Serializable]
@@ -1022,6 +1111,44 @@ namespace Airtime.Track
             EditorUtility.SetDirty(track);
         }
 
+        public void GenerateSampledNormals(BezierTrack track)
+        {
+            if (track.cachedDistance <= 0.0f)
+            {
+                Debug.LogWarning("BezierTrack has no cached distance or is 0 length, please cache distance first and/or edit curve");
+            }
+            else
+            {
+                Undo.RecordObject(track, "Generate Sampled Normals");
+
+                int count = Mathf.RoundToInt(track.cachedDistance / track.sampledNormalsDistance) + 1;
+                track.sampledNormals = new Vector3[count];
+
+                track.sampledNormals[0] = Vector3.up;
+
+                float position = 0.0f;
+                float arcNextTrackPosition = position + track.sampledNormalsDistance;
+                float multiplier = track.sampledNormalsDistance / Vector3.Distance(track.GetPointByDistance(position), track.GetPointByDistance(arcNextTrackPosition));
+                position += track.sampledNormalsDistance * multiplier;
+
+                for (int i = 1; i < count - 1; i++)
+                {
+                    track.sampledNormals[i] = track.GetNormal((float)i / count, track.sampledNormals[i - 1]);
+                }
+
+                EditorUtility.SetDirty(track);
+            }
+        }
+
+        public void ClearSampledNormals(BezierTrack track)
+        {
+            Undo.RecordObject(track, "Clear Cached Normals");
+
+            track.sampledNormals = null;
+
+            EditorUtility.SetDirty(track);
+        }
+
         public void CacheApproximateDistance(BezierTrack track)
         {
             Undo.RecordObject(track, "Cache Approximate Distance");
@@ -1080,6 +1207,17 @@ namespace Airtime.Track
                 Handles.DrawLine(p0, p0 + (look * (roll * Vector3.up) * rollSize));
 
                 p0 = p3;
+            }
+
+            // draw normals
+            if (track.sampledNormals != null)
+            {
+                Handles.color = Color.blue;
+                for (int i = 0; i < track.sampledNormals.Length; i++)
+                {
+                    Vector3 p = track.GetPoint((float)i / (float)track.sampledNormals.Length);
+                    Handles.DrawLine(p, p + track.sampledNormals[i] * normalSize);
+                }
             }
         }
 
