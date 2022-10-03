@@ -1050,6 +1050,8 @@ namespace Airtime.Track
                 {
                     track.SetControlPointRoll(i * 3, jsonTrack.rolls[i]);
                 }
+
+                track.SetIsLoop(jsonTrack.loop);
             }
             else
             {
