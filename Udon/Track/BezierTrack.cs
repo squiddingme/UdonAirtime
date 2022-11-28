@@ -648,7 +648,7 @@ namespace Airtime.Track
     [CustomEditor(typeof(BezierTrack))]
     public class BezierTrackEditor : Editor
     {
-        private const string importVersion = "dev-2";
+        private const string importVersion = "2.0";
         private const int evenSampleCount = 2000;
 
         private const float controlPointSize = 0.08f;
