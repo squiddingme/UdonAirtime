@@ -290,7 +290,7 @@ namespace Airtime.Track
             {
                 Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
                 Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
-                return Quaternion.LookRotation(GetVelocity(t)) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+                return Quaternion.LookRotation(GetVelocity(t), transform.rotation * Vector3.up) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
             }
             else
             {
@@ -305,7 +305,7 @@ namespace Airtime.Track
                 int index2 = Mathf.Clamp(index1 + 1, 0, sampledNormals.Length - 1);
                 Vector3 sample = Vector3.Lerp(sampledNormals[index1], sampledNormals[index2], value - whole);
 
-                return Quaternion.LookRotation(GetVelocity(t), sample) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+                return Quaternion.LookRotation(GetVelocity(t), transform.rotation * sample) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
             }
         }
 
@@ -1215,7 +1215,7 @@ namespace Airtime.Track
 
                 // draw roll
                 Handles.color = Color.cyan;
-                Vector3 velocity = track.transform.TransformPoint(track.ComputeTangent(p0, p1, p2, p3, 0.0f)) - track.transform.position;
+                Vector3 velocity = track.ComputeTangent(p0, p1, p2, p3, 0.0f);
                 Quaternion look = Quaternion.LookRotation(velocity);
                 Handles.DrawWireArc(p0, look * Vector3.forward, look * Vector3.up, 360f, rollSize);
                 Quaternion roll = Quaternion.Euler(0f, 0f, track.GetControlPointRoll(i));
