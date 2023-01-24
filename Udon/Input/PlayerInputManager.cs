@@ -44,12 +44,12 @@ namespace Airtime.Input
 
         public Vector2 GetDirection()
         {
-            return enabled && inputEnabled ? inputMove : Vector2.zero;
+            return enabled && inputEnabled ? Vector2.ClampMagnitude(inputMove, 1.0f) : Vector2.zero;
         }
 
         public Vector3 GetDirection3D()
         {
-            return enabled && inputEnabled ? inputMove3D : Vector3.zero;
+            return enabled && inputEnabled ? Vector3.ClampMagnitude(inputMove3D, 1.0f) : Vector3.zero;
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args)
