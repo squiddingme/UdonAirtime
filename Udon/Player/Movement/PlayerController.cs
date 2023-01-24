@@ -12,7 +12,7 @@ namespace Airtime.Player.Movement
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerController : UdonSharpBehaviour
     {
-        private const float ZERO_GRAVITY = 0.0001f;
+        private const float ZERO_GRAVITY = 0.0f;
         private const float AERIAL_TIME = 0.02f;
 
         [Header("Dependencies")]
@@ -61,6 +61,7 @@ namespace Airtime.Player.Movement
 
         [Header("Wall Jump Properties")]
         [Tooltip("Allow wall jumping. If wall riding is also on, wall jumping will be a part of the wallriding mechanic")] public bool wallJumpEnabled = false;
+        [Tooltip("Retain the player's movement speed when they wall jump")] public bool wallJumpRetainSpeed = false;
         [Tooltip("Force to push player away from wall when wall jumping")] public float wallJumpForce = 4.0f;
         [Tooltip("Balance between wall jumping in the direction the player is facing (1) and ejecting directly off the wall (0)")] [Range(0.0f, 1.0f)] public float wallJumpDirectionality = 0.7f;
         [Tooltip("Force applied to wall jump")] public float wallJumpImpulse = 3.0f;
@@ -191,6 +192,21 @@ namespace Airtime.Player.Movement
             }
         }
 
+        public override void OnPlayerRespawn(VRCPlayerApi player)
+        {
+            if (player.isLocal)
+            {
+                if (playerState == STATE_GRINDING)
+                {
+                    EndGrind(0.1f);
+                }
+
+                SetPlayerState(STATE_AERIAL);
+
+                localPlayer.SetVelocity(Vector3.zero);
+            }
+        }
+
         public void ApplyPlayerProperties()
         {
             localPlayer.SetWalkSpeed(walkSpeed);
@@ -207,12 +223,22 @@ namespace Airtime.Player.Movement
             localPlayer.SetJumpImpulse(jumpImpulse);
         }
 
+        public void ApplyPlayerGravity()
+        {
+            localPlayer.SetGravityStrength(gravityStrength);
+        }
+
         public void RemovePlayerProperties()
         {
             localPlayer.SetWalkSpeed(0f);
             localPlayer.SetRunSpeed(0f);
             localPlayer.SetStrafeSpeed(0f);
             localPlayer.SetJumpImpulse(0f);
+        }
+
+        public void RemovePlayerGravity()
+        {
+            localPlayer.SetGravityStrength(ZERO_GRAVITY);
         }
 
         public int GetPlayerState()
@@ -289,7 +315,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGroundedStart()
         {
             ApplyPlayerProperties();
-            localPlayer.SetGravityStrength(gravityStrength);
+            ApplyPlayerGravity();
 
             // set coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
@@ -355,7 +381,7 @@ namespace Airtime.Player.Movement
             { 
                 ApplyPlayerProperties();
             }
-            localPlayer.SetGravityStrength(gravityStrength);
+            ApplyPlayerGravity();
         }
 
         private void PlayerStateAerialUpdate()
@@ -433,7 +459,17 @@ namespace Airtime.Player.Movement
                         directionality = Mathf.Clamp01(dirAngle / 120.0f) * wallJumpDirectionality;
                     }
 
-                    localPlayerVelocity = Vector3.Lerp(lastWallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
+                    float velocityMagnitude = localPlayerVelocity.magnitude;
+
+                    // retain wallride speed when wall jumping
+                    if (wallJumpRetainSpeed && velocityMagnitude > wallJumpForce)
+                    {
+                        localPlayerVelocity = Vector3.Lerp(wallHit.normal * velocityMagnitude, localPlayerRotation * Vector3.forward * velocityMagnitude, directionality);
+                    }
+                    else
+                    {
+                        localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
+                    }
                     localPlayerVelocity.y = wallJumpImpulse;
 
                     bonusJumpTimeRemaining = bonusJumpTime;
@@ -520,7 +556,10 @@ namespace Airtime.Player.Movement
                 }
 
                 // apply our velocity changes
+                // workaround so you can test airtime in clientsim (but you won't be able to double jump or anything cool)
+#if !UNITY_EDITOR
                 localPlayer.SetVelocity(localPlayerVelocity);
+#endif
             }
         }
 
@@ -533,7 +572,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateWallrideStart()
         {
             ApplyPlayerProperties();
-            localPlayer.SetGravityStrength(gravityStrength);
+            ApplyPlayerGravity();
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = 0.0f;
@@ -582,7 +621,17 @@ namespace Airtime.Player.Movement
                             directionality = Mathf.Clamp01(dirAngle / 120.0f) * wallJumpDirectionality;
                         }
 
-                        localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
+                        float velocityMagnitude = localPlayerVelocity.magnitude;
+
+                        // retain wallride speed when wall jumping
+                        if (wallJumpRetainSpeed && velocityMagnitude > wallJumpForce)
+                        {
+                            localPlayerVelocity = Vector3.Lerp(wallHit.normal * velocityMagnitude, localPlayerRotation * Vector3.forward * velocityMagnitude, directionality);
+                        }
+                        else
+                        {
+                            localPlayerVelocity = Vector3.Lerp(wallHit.normal * wallJumpForce, localPlayerRotation * Vector3.forward * wallJumpForce, directionality);
+                        }
                         localPlayerVelocity.y = wallJumpImpulse;
 
                         bonusJumpTimeRemaining = bonusJumpTime;
@@ -633,7 +682,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateSnappingStart()
         {
             RemovePlayerProperties();
-            localPlayer.SetGravityStrength(ZERO_GRAVITY);
+            RemovePlayerGravity();
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
@@ -699,7 +748,7 @@ namespace Airtime.Player.Movement
         private void PlayerStateGrindingStart()
         {
             RemovePlayerProperties();
-            localPlayer.SetGravityStrength(ZERO_GRAVITY);
+            RemovePlayerGravity();
 
             // grinding also gives us coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
@@ -973,6 +1022,11 @@ namespace Airtime.Player.Movement
         public Quaternion GetGrindDirection()
         {
             return Quaternion.LookRotation(walker.trackDirection * currentTrackVelocity);
+        }
+
+        public Quaternion GetDirection()
+        {
+            return Quaternion.LookRotation(localPlayer.GetVelocity()).normalized;
         }
 
         public void RegisterEventHandler(UdonBehaviour behaviour)
