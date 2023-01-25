@@ -583,7 +583,7 @@ namespace Airtime.Track
 
         public float GetIndexValue(int index)
         {
-            float t = (float)(index - 1) / 3;
+            float t = (float)index / 3;
             t = t / GetCurveCount();
             t = Mathf.Clamp01(t);
 
@@ -1203,10 +1203,22 @@ namespace Airtime.Track
 
             Quaternion orientation = Tools.pivotRotation == PivotRotation.Local ? track.transform.rotation : Quaternion.identity;
 
+            // draw normals
+            if (track.sampledNormals != null)
+            {
+                Handles.color = Color.blue;
+                for (int i = 0; i < track.sampledNormals.Length; i++)
+                {
+                    Vector3 p = track.GetPoint((float)i / (float)track.sampledNormals.Length);
+                    Handles.DrawLine(p, p + (track.transform.rotation * track.sampledNormals[i]) * normalSize);
+                }
+            }
+
+            // draw bezier
             Vector3 p0 = PointHandle(track, 0, track.transform, orientation, controlPointSize, Color.cyan);
             for (int i = 1; i < track.GetControlPointCount(); i += 3)
             {
-                float t = track.GetIndexValue(i);
+                float t = track.GetIndexValue(i - 1);
 
                 Vector3 p1 = PointHandle(track, i, track.transform, orientation, handleSize, Color.yellow);
                 Vector3 p2 = PointHandle(track, i + 1, track.transform, orientation, handleSize, Color.yellow);
@@ -1239,17 +1251,6 @@ namespace Airtime.Track
                 Handles.DrawLine(p0, p0 + (rotation * rollSize));
 
                 p0 = p3;
-            }
-
-            // draw normals
-            if (track.sampledNormals != null)
-            {
-                Handles.color = Color.blue;
-                for (int i = 0; i < track.sampledNormals.Length; i++)
-                {
-                    Vector3 p = track.GetPoint((float)i / (float)track.sampledNormals.Length);
-                    Handles.DrawLine(p, p + (track.transform.rotation * track.sampledNormals[i]) * normalSize);
-                }
             }
         }
 
