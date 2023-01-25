@@ -29,6 +29,7 @@ namespace Airtime.Player.Effects
         [Header("Effects")]
         public Transform grindTransform;
         public Transform wallrideTransform;
+        public AudioSource jumpSound;
         public AudioSource doubleJumpSound;
         public AudioSource wallJumpSound;
         public AudioSource grindStartSound;
@@ -91,6 +92,11 @@ namespace Airtime.Player.Effects
                     animator.SetBool(animatorGrindingParam, playerState == STATE_GRINDING);
                 }
             }
+        }
+
+        public void _Jump()
+        {
+            jumpSound.Play();
         }
 
         public void _DoubleJump()

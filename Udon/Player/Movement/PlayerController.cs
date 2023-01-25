@@ -34,6 +34,7 @@ namespace Airtime.Player.Movement
         [Tooltip("Minimum speed (as percentage of maximum speed) as soon as the player starts moving.")] [Range(0.0f, 1.0f)] public float accelerationMinimum = 0.2f;
 
         [Header("Custom Jump Properties")]
+        [Tooltip("Vertical speed threshold that is considered a jump event")] public float jumpSpeedThreshold = 0.2f;
         [Tooltip("Extra time (in seconds) the player can hold the jump button for a higher jump")] public float bonusJumpTime = 0.0f;
         [Tooltip("Extra time after dropping off a platform that the player can still jump (coyote time)")] public float ledgeJumpTime = 0.1f;
 
@@ -119,6 +120,7 @@ namespace Airtime.Player.Movement
         private float accelerationMultiplier = 0.0f;
 
         // STATE_AERIAL
+        private bool aerialJumped = true;
         private float aerialTime = 0.0f;
         private float bonusJumpTimeRemaining = 0.0f;
         private float ledgeJumpTimeRemaining = 0.0f;
@@ -200,6 +202,8 @@ namespace Airtime.Player.Movement
                 {
                     EndGrind(0.1f);
                 }
+
+                aerialJumped = false;
 
                 SetPlayerState(STATE_AERIAL);
 
@@ -382,6 +386,14 @@ namespace Airtime.Player.Movement
                 ApplyPlayerProperties();
             }
             ApplyPlayerGravity();
+
+            // send a jump event if we went up with enough force
+            if (aerialJumped && localPlayerVelocity.y >= jumpSpeedThreshold)
+            {
+                SendOptionalCustomEvent("_Jump");
+            }
+
+            aerialJumped = true;
         }
 
         private void PlayerStateAerialUpdate()
@@ -646,6 +658,8 @@ namespace Airtime.Player.Movement
 
                         SendOptionalCustomEvent("_WallJump");
 
+                        aerialJumped = false;
+
                         SetPlayerState(STATE_AERIAL);
                     }
                     // wallride slowdown
@@ -658,6 +672,8 @@ namespace Airtime.Player.Movement
                 }
                 else
                 {
+                    aerialJumped = false;
+
                     SetPlayerState(STATE_AERIAL);
                 }
             }
@@ -715,6 +731,8 @@ namespace Airtime.Player.Movement
                 {
                     walker.track.gameObject.SetActive(true);
                 }
+
+                aerialJumped = false;
 
                 SetPlayerState(STATE_AERIAL);
             }
@@ -782,6 +800,8 @@ namespace Airtime.Player.Movement
                 {
                     walker.track.gameObject.SetActive(true);
                 }
+
+                aerialJumped = false;
 
                 SetPlayerState(STATE_AERIAL);
             }
@@ -858,6 +878,8 @@ namespace Airtime.Player.Movement
 
                     localPlayerVelocity = walker.trackDirection * currentTrackVelocity.normalized * trackSpeed;
                     localPlayer.SetVelocity(localPlayerVelocity);
+
+                    aerialJumped = false;
 
                     SetPlayerState(STATE_AERIAL);
                 }
@@ -938,6 +960,8 @@ namespace Airtime.Player.Movement
 
                 localPlayerVelocity = walker.trackDirection * (walker.track.GetVelocityByDistance(walker.trackPosition).normalized * trackSpeed);
 
+                aerialJumped = false;
+
                 SetPlayerState(STATE_AERIAL);
             }
         }
@@ -955,6 +979,8 @@ namespace Airtime.Player.Movement
             }
             else
             {
+                aerialJumped = false;
+
                 SetPlayerState(STATE_AERIAL);
             }
         }

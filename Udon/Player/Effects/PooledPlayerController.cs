@@ -31,6 +31,7 @@ namespace Airtime.Player.Effects
         [Header("Effects")]
         public Transform grindTransform;
         public Transform wallrideTransform;
+        public AudioSource jumpSound;
         public AudioSource doubleJumpSound;
         public AudioSource wallJumpSound;
         public AudioSource grindStartSound;
@@ -115,6 +116,16 @@ namespace Airtime.Player.Effects
         public void _OnCleanup()
         {
             ownerCached = false;
+        }
+
+        public void _Jump()
+        {
+            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedJump");
+        }
+
+        public void NetworkedJump()
+        {
+            jumpSound.Play();
         }
 
         public void _DoubleJump()
