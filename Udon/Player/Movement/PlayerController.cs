@@ -91,14 +91,14 @@ namespace Airtime.Player.Movement
         [Tooltip("Time it takes to snap to a rail when first touching it, in seconds")] public float trackSnapTime = 0.08f;
 
         // VRC Stuff
-        private VRCPlayerApi localPlayer;
-        private bool localPlayerCached = false;
-        private Vector3 localPlayerPosition = Vector3.zero;
-        private Quaternion localPlayerRotation = Quaternion.identity;
-        private Vector3 localPlayerVelocity = Vector3.zero;
-        private Vector3 localPlayerCenter = Vector3.up * 0.5f;
-        private Vector3 localPlayerCapsuleA = Vector3.up * 0.25f;
-        private Vector3 localPlayerCapsuleB = Vector3.up * 1.5f;
+        protected VRCPlayerApi localPlayer;
+        protected bool localPlayerCached = false;
+        protected Vector3 localPlayerPosition = Vector3.zero;
+        protected Quaternion localPlayerRotation = Quaternion.identity;
+        protected Vector3 localPlayerVelocity = Vector3.zero;
+        protected Vector3 localPlayerCenter = Vector3.up * 0.5f;
+        protected Vector3 localPlayerCapsuleA = Vector3.up * 0.25f;
+        protected Vector3 localPlayerCapsuleB = Vector3.up * 1.5f;
 
         // Player States
         public const int STATE_STOPPED = 0;
@@ -108,45 +108,45 @@ namespace Airtime.Player.Movement
         public const int STATE_SNAPPING = 4;
         public const int STATE_GRINDING = 5;
         public const int STATE_CUSTOM = 6;
-        private int playerState = STATE_AERIAL; // start on aerial
+        protected int playerState = STATE_AERIAL; // start on aerial
 
         // Player Input
-        private Vector3 input3D = Vector3.zero;
-        private bool inputJumped = false;
-        private bool inputDoubleJumped = true;
-        private bool inputTurned = false;
+        protected Vector3 input3D = Vector3.zero;
+        protected bool inputJumped = false;
+        protected bool inputDoubleJumped = true;
+        protected bool inputTurned = false;
 
         // STATE_GROUNDED
-        private float accelerationMultiplier = 0.0f;
+        protected float accelerationMultiplier = 0.0f;
 
         // STATE_AERIAL
-        private bool aerialJumped = true;
-        private float aerialTime = 0.0f;
-        private float bonusJumpTimeRemaining = 0.0f;
-        private float ledgeJumpTimeRemaining = 0.0f;
+        protected bool aerialJumped = true;
+        protected float aerialTime = 0.0f;
+        protected float bonusJumpTimeRemaining = 0.0f;
+        protected float ledgeJumpTimeRemaining = 0.0f;
 
         // STATE_AERIAL & STATE_WALLRIDE
-        private RaycastHit wallHit = new RaycastHit();
-        private RaycastHit lastWallHit = new RaycastHit();
-        private float wallJumpTimeRemaining = 0.0f;
-        private float wallJumpCooldownRemaining = 0.0f;
-        private bool wallJumpInputCooldownActive = false;
-        private float wallJumpInputCooldownRemaining = 0.0f;
+        protected RaycastHit wallHit = new RaycastHit();
+        protected RaycastHit lastWallHit = new RaycastHit();
+        protected float wallJumpTimeRemaining = 0.0f;
+        protected float wallJumpCooldownRemaining = 0.0f;
+        protected bool wallJumpInputCooldownActive = false;
+        protected float wallJumpInputCooldownRemaining = 0.0f;
 
         // STATE_GRINDING
-        private float trackSnapTimer = 0.0f;
-        private float previousTrackPosition = 0.0f;
-        private float trackSpeed = 0.0f;
-        private Vector3 currentTrackVelocity = Vector3.forward;
-        private Quaternion currentTrackOrientation = Quaternion.identity;
-        private float grindingCooldownRemaining = 0.0f;
-        private float grindingTurnCooldownRemaining = 0.0f;
+        protected float trackSnapTimer = 0.0f;
+        protected float previousTrackPosition = 0.0f;
+        protected float trackSpeed = 0.0f;
+        protected Vector3 currentTrackVelocity = Vector3.forward;
+        protected Quaternion currentTrackOrientation = Quaternion.identity;
+        protected float grindingCooldownRemaining = 0.0f;
+        protected float grindingTurnCooldownRemaining = 0.0f;
 
         // Event Handling
-        private UdonBehaviour eventHandler;
-        private bool eventHandlerCached = false;
+        protected UdonBehaviour eventHandler;
+        protected bool eventHandlerCached = false;
 
-        public void Start()
+        public virtual void Start()
         {
             localPlayer = Networking.LocalPlayer;
             if (localPlayer != null)
@@ -155,7 +155,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        public void Update()
+        public virtual void Update()
         {
             if (localPlayerCached && Utilities.IsValid(localPlayer))
             {
@@ -185,10 +185,6 @@ namespace Airtime.Player.Movement
                         PlayerStateGrindingUpdate();
                         break;
                     case STATE_CUSTOM:
-                        break;
-                    default:
-                        Debug.LogError(string.Format("PlayerController {0} is set to non-existent state {1}", gameObject.name, playerState));
-                        playerState = STATE_AERIAL;
                         break;
                 }
             }
@@ -250,7 +246,7 @@ namespace Airtime.Player.Movement
             return playerState;
         }
 
-        private void SetPlayerState(int state)
+        protected virtual void SetPlayerState(int state)
         {
             switch (playerState)
             {
@@ -298,13 +294,13 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateStoppedStart()
+        protected virtual void PlayerStateStoppedStart()
         {
             RemovePlayerProperties();
             localPlayer.SetVelocity(Vector3.zero);
         }
 
-        private void PlayerStateStoppedEnd()
+        protected virtual void PlayerStateStoppedEnd()
         {
             if (accelerationEnabled)
             {
@@ -316,7 +312,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateGroundedStart()
+        protected virtual void PlayerStateGroundedStart()
         {
             ApplyPlayerProperties();
             ApplyPlayerGravity();
@@ -345,7 +341,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateGroundedUpdate()
+        protected virtual void PlayerStateGroundedUpdate()
         {
             // switch to aerial state
             if (!localPlayer.IsPlayerGrounded())
@@ -379,7 +375,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateAerialStart()
+        protected virtual void PlayerStateAerialStart()
         {
             if (wallJumpInputCooldownRemaining <= 0.0f)
             { 
@@ -396,7 +392,7 @@ namespace Airtime.Player.Movement
             aerialJumped = true;
         }
 
-        private void PlayerStateAerialUpdate()
+        protected virtual void PlayerStateAerialUpdate()
         {
             // tick down grinding cooldown timer so we can start grinding again
             if (grindingCooldownRemaining > 0.0f)
@@ -577,13 +573,13 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateAerialEnd()
+        protected virtual void PlayerStateAerialEnd()
         {
             wallJumpInputCooldownActive = false;
             wallJumpInputCooldownRemaining = 0.0f;
         }
 
-        private void PlayerStateWallrideStart()
+        protected virtual void PlayerStateWallrideStart()
         {
             ApplyPlayerProperties();
             ApplyPlayerGravity();
@@ -595,7 +591,7 @@ namespace Airtime.Player.Movement
             grindingCooldownRemaining = 0.0f;
         }
 
-        private void PlayerStateWallrideUpdate()
+        protected virtual void PlayerStateWallrideUpdate()
         {
             // tick down walljump cooldown timer so we can walljump again
             if (wallJumpCooldownRemaining > 0.0f)
@@ -685,7 +681,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateWallrideEnd()
+        protected virtual void PlayerStateWallrideEnd()
         {
             // extra time from coming off a wall where a walljump is still valid
             wallJumpTimeRemaining = wallJumpTime;
@@ -697,7 +693,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateSnappingStart()
+        protected virtual void PlayerStateSnappingStart()
         {
             RemovePlayerProperties();
             RemovePlayerGravity();
@@ -715,7 +711,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateSnappingUpdate()
+        protected virtual void PlayerStateSnappingUpdate()
         {
             // jump from grind
             if (inputManager.GetJumpDown())
@@ -755,7 +751,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateSnappingEnd()
+        protected virtual void PlayerStateSnappingEnd()
         {
             // use to play a nice sound effect
             SendOptionalCustomEvent("_StartGrind");
@@ -765,7 +761,7 @@ namespace Airtime.Player.Movement
             grindingTurnCooldownRemaining = 0.0f;
         }
 
-        private void PlayerStateGrindingStart()
+        protected virtual void PlayerStateGrindingStart()
         {
             RemovePlayerProperties();
             RemovePlayerGravity();
@@ -783,7 +779,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateGrindingUpdate()
+        protected virtual void PlayerStateGrindingUpdate()
         {
             // jump from grind
             if (inputManager.GetJumpDown())
@@ -902,7 +898,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        private void PlayerStateGrindingEnd()
+        protected virtual void PlayerStateGrindingEnd()
         {
             // use this to play a nice effect
             SendOptionalCustomEvent("_StopGrind");

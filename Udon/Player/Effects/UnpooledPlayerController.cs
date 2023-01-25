@@ -17,7 +17,7 @@ namespace Airtime.Player.Effects
     public class UnpooledPlayerController : UdonSharpBehaviour
     {
         [HideInInspector] public PlayerController controller;
-        private bool controllerCached = false;
+        protected bool controllerCached = false;
 
         [Header("Animation")]
         public bool useAnimator;
@@ -36,8 +36,8 @@ namespace Airtime.Player.Effects
         public AudioSource grindStopSound;
 
         // VRC Stuff
-        private VRCPlayerApi localPlayer;
-        private bool localPlayerCached = false;
+        protected VRCPlayerApi localPlayer;
+        protected bool localPlayerCached = false;
 
         // Player States (we have to keep a copy here because of udon)
         public const int STATE_STOPPED = 0;
@@ -49,10 +49,10 @@ namespace Airtime.Player.Effects
         public const int STATE_CUSTOM = 6;
 
         // Effects
-        private int playerState;
-        private float playerScaledVelocity;
+        protected int playerState;
+        protected float playerScaledVelocity;
 
-        public void Start()
+        public virtual void Start()
         {
             localPlayer = Networking.LocalPlayer;
             if (localPlayer != null)
@@ -69,7 +69,7 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void LateUpdate()
+        public virtual void LateUpdate()
         {
             if (localPlayerCached && Utilities.IsValid(localPlayer))
             {
@@ -94,32 +94,32 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void _Jump()
+        public virtual void _Jump()
         {
             jumpSound.Play();
         }
 
-        public void _DoubleJump()
+        public virtual void _DoubleJump()
         {
             doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
         }
 
-        public void _WallJump()
+        public virtual void _WallJump()
         {
             wallJumpSound.PlayOneShot(wallJumpSound.clip);
         }
 
-        public void _StartGrind()
+        public virtual void _StartGrind()
         {
             grindStartSound.PlayOneShot(grindStartSound.clip);
         }
 
-        public void _StopGrind()
+        public virtual void _StopGrind()
         {
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }
 
-        public void _SwitchGrindDirection()
+        public virtual void _SwitchGrindDirection()
         {
             grindStopSound.PlayOneShot(grindStopSound.clip);
         }

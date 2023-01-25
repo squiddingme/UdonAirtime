@@ -12,19 +12,19 @@ namespace Airtime.Input
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PlayerInputManager : UdonSharpBehaviour
     {
-        private bool inputEnabled = true;
+        protected bool inputEnabled = true;
 
-        private Vector2 inputMove = new Vector2();
-        private Vector3 inputMove3D = new Vector3();
-        private bool inputJump = false;
-        private bool inputJumped = false;
+        protected Vector2 inputMove = new Vector2();
+        protected Vector3 inputMove3D = new Vector3();
+        protected bool inputJump = false;
+        protected bool inputJumped = false;
 
-        public void Update()
+        public virtual void Update()
         {
             inputJumped = false;
         }
 
-        public void OnDisable()
+        public virtual void OnDisable()
         {
             inputJump = false;
             inputJumped = false;

@@ -19,7 +19,7 @@ namespace Airtime.Player.Effects
     public class PooledPlayerController : UdonSharpBehaviour
     {
         [HideInInspector] public PlayerController controller;
-        private bool controllerCached = false;
+        protected bool controllerCached = false;
 
         [Header("Animation")]
         public bool useAnimator;
@@ -39,9 +39,9 @@ namespace Airtime.Player.Effects
 
         // VRC Stuff
         public VRCPlayerApi Owner;
-        private bool ownerCached = false;
-        private VRCPlayerApi localPlayer;
-        private bool localPlayerCached = false;
+        protected bool ownerCached = false;
+        protected VRCPlayerApi localPlayer;
+        protected bool localPlayerCached = false;
 
         // Player States (we have to keep a copy here because of udon)
         public const int STATE_STOPPED = 0;
@@ -53,11 +53,11 @@ namespace Airtime.Player.Effects
         public const int STATE_CUSTOM = 6;
 
         // Networked Effects
-        [UdonSynced] private int networkPlayerState;
-        [UdonSynced(UdonSyncMode.Linear)] private float networkPlayerScaledVelocity;
-        [UdonSynced(UdonSyncMode.Linear)] private Quaternion networkPlayerGrindDirection;
+        [UdonSynced] protected int networkPlayerState;
+        [UdonSynced(UdonSyncMode.Linear)] protected float networkPlayerScaledVelocity;
+        [UdonSynced(UdonSyncMode.Linear)] protected Quaternion networkPlayerGrindDirection;
 
-        public void Start()
+        public virtual void Start()
         {
             localPlayer = Networking.LocalPlayer;
             if (localPlayer != null)
@@ -71,7 +71,7 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void LateUpdate()
+        public virtual void LateUpdate()
         {
             if (ownerCached && localPlayerCached && Utilities.IsValid(localPlayer))
             {
@@ -98,9 +98,8 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void _OnOwnerSet()
+        public virtual void _OnOwnerSet()
         {
-            //owner = Networking.GetOwner(gameObject);
             if (Owner != null)
             {
                 if (Owner.isLocal && controller != null)
@@ -113,12 +112,12 @@ namespace Airtime.Player.Effects
             }
         }
 
-        public void _OnCleanup()
+        public virtual void _OnCleanup()
         {
             ownerCached = false;
         }
 
-        public void _Jump()
+        public virtual void _Jump()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedJump");
         }
@@ -128,7 +127,7 @@ namespace Airtime.Player.Effects
             jumpSound.Play();
         }
 
-        public void _DoubleJump()
+        public virtual void _DoubleJump()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedDoubleJump");
         }
@@ -138,7 +137,7 @@ namespace Airtime.Player.Effects
             doubleJumpSound.PlayOneShot(doubleJumpSound.clip);
         }
 
-        public void _WallJump()
+        public virtual void _WallJump()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedWallJump");
         }
@@ -148,7 +147,7 @@ namespace Airtime.Player.Effects
             wallJumpSound.PlayOneShot(wallJumpSound.clip);
         }
 
-        public void _StartGrind()
+        public virtual void _StartGrind()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStartGrind");
         }
@@ -158,12 +157,12 @@ namespace Airtime.Player.Effects
             grindStartSound.PlayOneShot(grindStartSound.clip);
         }
 
-        public void _StopGrind()
+        public virtual void _StopGrind()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
         }
 
-        public void _SwitchGrindDirection()
+        public virtual void _SwitchGrindDirection()
         {
             SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "NetworkedStopGrind");
         }
