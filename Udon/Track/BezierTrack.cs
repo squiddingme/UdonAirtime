@@ -4,6 +4,8 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using Unity.Mathematics;
+using System.Reflection;
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
 using System.IO;
@@ -285,27 +287,12 @@ namespace Airtime.Track
             {
                 return Quaternion.LookRotation(GetVelocity(t));
             }
-            // y-up roll calculation if there are no cached normals
-            else if (sampledNormals == null)
-            {
-                Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
-                Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
-                return Quaternion.LookRotation(GetVelocity(t), transform.rotation * Vector3.up) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
-            }
             else
             {
                 Quaternion roll1 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t)));
                 Quaternion roll2 = Quaternion.Euler(0f, 0f, GetControlPointRoll(GetCurveIndex(t) + 4));
 
-                // interpolate cached normals
-                float value = sampledNormals.Length * Mathf.Clamp01(t);
-                float whole = Mathf.Floor(value);
-
-                int index1 = Mathf.Clamp((int)whole, 0, sampledNormals.Length - 1);
-                int index2 = Mathf.Clamp(index1 + 1, 0, sampledNormals.Length - 1);
-                Vector3 sample = Vector3.Lerp(sampledNormals[index1], sampledNormals[index2], value - whole);
-
-                return Quaternion.LookRotation(GetVelocity(t), transform.rotation * sample) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
+                return Quaternion.LookRotation(GetVelocity(t), transform.rotation * GetInterpolatedNormal(t)) * Quaternion.Lerp(roll1, roll2, GetCurveValue(t));
             }
         }
 
@@ -564,6 +551,24 @@ namespace Airtime.Track
             return sampledNormals[index];
         }
 
+        public Vector3 GetInterpolatedNormal(float t)
+        {
+            if (sampledNormals == null)
+            {
+                return Vector3.up;
+            }
+            else
+            {
+                // interpolate cached normals
+                float value = sampledNormals.Length * Mathf.Clamp01(t);
+                float whole = Mathf.Floor(value);
+
+                int index1 = Mathf.Clamp((int)whole, 0, sampledNormals.Length - 1);
+                int index2 = Mathf.Clamp(index1 + 1, 0, sampledNormals.Length - 1);
+                return Vector3.Lerp(sampledNormals[index1], sampledNormals[index2], value - whole);
+            }
+        }
+
         public int GetCurveIndex(float t)
         {
             if (t >= 1.0f)
@@ -574,6 +579,15 @@ namespace Airtime.Track
             t = Mathf.Clamp01(t) * GetCurveCount();
 
             return Mathf.FloorToInt(t) * 3;
+        }
+
+        public float GetIndexValue(int index)
+        {
+            float t = (float)(index - 1) / 3;
+            t = t / GetCurveCount();
+            t = Mathf.Clamp01(t);
+
+            return t;
         }
 
         public float GetCurveValue(float t)
@@ -1192,6 +1206,8 @@ namespace Airtime.Track
             Vector3 p0 = PointHandle(track, 0, track.transform, orientation, controlPointSize, Color.cyan);
             for (int i = 1; i < track.GetControlPointCount(); i += 3)
             {
+                float t = track.GetIndexValue(i);
+
                 Vector3 p1 = PointHandle(track, i, track.transform, orientation, handleSize, Color.yellow);
                 Vector3 p2 = PointHandle(track, i + 1, track.transform, orientation, handleSize, Color.yellow);
                 Vector3 p3;
@@ -1219,7 +1235,8 @@ namespace Airtime.Track
                 Quaternion look = Quaternion.LookRotation(velocity);
                 Handles.DrawWireArc(p0, look * Vector3.forward, look * Vector3.up, 360f, rollSize);
                 Quaternion roll = Quaternion.Euler(0f, 0f, track.GetControlPointRoll(i));
-                Handles.DrawLine(p0, p0 + (look * (roll * Vector3.up) * rollSize));
+                Vector3 rotation = track.transform.rotation * Quaternion.LookRotation(velocity, track.GetInterpolatedNormal(t)) * roll * Vector3.up;
+                Handles.DrawLine(p0, p0 + (rotation * rollSize));
 
                 p0 = p3;
             }
