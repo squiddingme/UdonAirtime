@@ -1235,7 +1235,7 @@ namespace Airtime.Track
                 Quaternion look = Quaternion.LookRotation(velocity);
                 Handles.DrawWireArc(p0, look * Vector3.forward, look * Vector3.up, 360f, rollSize);
                 Quaternion roll = Quaternion.Euler(0f, 0f, track.GetControlPointRoll(i));
-                Vector3 rotation = track.transform.rotation * Quaternion.LookRotation(velocity, track.GetInterpolatedNormal(t)) * roll * Vector3.up;
+                Vector3 rotation = Quaternion.LookRotation(velocity, track.transform.rotation * track.GetInterpolatedNormal(t)) * roll * Vector3.up;
                 Handles.DrawLine(p0, p0 + (rotation * rollSize));
 
                 p0 = p3;
@@ -1248,7 +1248,7 @@ namespace Airtime.Track
                 for (int i = 0; i < track.sampledNormals.Length; i++)
                 {
                     Vector3 p = track.GetPoint((float)i / (float)track.sampledNormals.Length);
-                    Handles.DrawLine(p, p + track.sampledNormals[i] * normalSize);
+                    Handles.DrawLine(p, p + (track.transform.rotation * track.sampledNormals[i]) * normalSize);
                 }
             }
         }
