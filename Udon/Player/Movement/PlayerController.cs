@@ -526,6 +526,8 @@ namespace Airtime.Player.Movement
                         bonusJumpTimeRemaining = bonusJumpTime;
 
                         ledgeJumpTimeRemaining = 0.0f;
+
+                        SendOptionalCustomEvent("_Jump");
                     }
                 }
 
