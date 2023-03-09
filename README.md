@@ -13,8 +13,8 @@ Get it in the [releases](https://github.com/squiddingme/UdonAirtime/releases).
 Also, check [here](https://github.com/squiddingme/UdonAirtimeBlenderExport) for a Blender addon that converts bézier curves from Blender to UdonAirtime.
 
 ## Basic Setup
-1. Use [Creator Companion](https://vrchat.com/home/download)) to create or upgrade project
-3. Import UdonSharp to project using the [Creator Companion](https://vrchat.com/home/download))
+1. Use [Creator Companion](https://vrchat.com/home/download) to create or upgrade project
+3. Import UdonSharp to project using the [Creator Companion](https://vrchat.com/home/download)
 4. (Optional) Import [CyanPlayerObjectPool](https://github.com/CyanLaser/CyanPlayerObjectPool/releases) to project to use the PooledPlayerController, which allows everyone to see each other's effects and sounds
 5. Import UdonAirtime package to project
 
