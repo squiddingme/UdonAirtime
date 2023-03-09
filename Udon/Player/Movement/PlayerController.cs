@@ -100,15 +100,19 @@ namespace Airtime.Player.Movement
         protected Vector3 localPlayerCapsuleA = Vector3.up * 0.25f;
         protected Vector3 localPlayerCapsuleB = Vector3.up * 1.5f;
 
+        // Built-in Player States
+        public const string STATE_STOPPED = "Stopped";
+        public const string STATE_GROUNDED = "Grounded";
+        public const string STATE_AERIAL = "Aerial";
+        public const string STATE_WALLRIDE = "Wallride";
+        public const string STATE_SNAPPING = "Snapping";
+        public const string STATE_GRINDING = "Grinding";
+
         // Player States
-        public const int STATE_STOPPED = 0;
-        public const int STATE_GROUNDED = 1;
-        public const int STATE_AERIAL = 2;
-        public const int STATE_WALLRIDE = 3;
-        public const int STATE_SNAPPING = 4;
-        public const int STATE_GRINDING = 5;
-        public const int STATE_CUSTOM = 6;
-        protected int playerState = STATE_AERIAL; // start on aerial
+        protected string playerState = "Aerial"; // start on aerial
+        private string playerStateStart = "PlayerStateAerialStart";
+        private string playerStateEnd = "PlayerStateAerialEnd";
+        private string playerStateUpdate = "PlayerStateAerialUpdate";
 
         // Player Input
         protected Vector3 input3D = Vector3.zero;
@@ -165,27 +169,9 @@ namespace Airtime.Player.Movement
                 localPlayerRotation = localPlayer.GetRotation();
                 localPlayerVelocity = localPlayer.GetVelocity();
 
-                switch (playerState)
+                if (GetPlayerState() != STATE_STOPPED)
                 {
-                    case STATE_STOPPED:
-                        break;
-                    case STATE_GROUNDED:
-                        PlayerStateGroundedUpdate();
-                        break;
-                    case STATE_AERIAL:
-                        PlayerStateAerialUpdate();
-                        break;
-                    case STATE_WALLRIDE:
-                        PlayerStateWallrideUpdate();
-                        break;
-                    case STATE_SNAPPING:
-                        PlayerStateSnappingUpdate();
-                        break;
-                    case STATE_GRINDING:
-                        PlayerStateGrindingUpdate();
-                        break;
-                    case STATE_CUSTOM:
-                        break;
+                    SendCustomEvent(playerStateUpdate);
                 }
             }
         }
@@ -194,7 +180,7 @@ namespace Airtime.Player.Movement
         {
             if (player.isLocal)
             {
-                if (playerState == STATE_GRINDING)
+                if (GetPlayerState() == STATE_GRINDING)
                 {
                     EndGrind(0.1f);
                 }
@@ -241,66 +227,30 @@ namespace Airtime.Player.Movement
             localPlayer.SetGravityStrength(ZERO_GRAVITY);
         }
 
-        public int GetPlayerState()
+        public string GetPlayerState()
         {
             return playerState;
         }
 
-        protected virtual void SetPlayerState(int state)
+        protected void SetPlayerState(string state)
         {
-            switch (playerState)
-            {
-                case STATE_STOPPED:
-                    PlayerStateStoppedEnd();
-                    break;
-                case STATE_GROUNDED:
-                    break;
-                case STATE_AERIAL:
-                    PlayerStateAerialEnd();
-                    break;
-                case STATE_WALLRIDE:
-                    PlayerStateWallrideEnd();
-                    break;
-                case STATE_SNAPPING:
-                    PlayerStateSnappingEnd();
-                    break;
-                case STATE_GRINDING:
-                    PlayerStateGrindingEnd();
-                    break;
-            }
+            SendCustomEvent(playerStateEnd);
 
             playerState = state;
+            playerStateStart = string.Format("PlayerState{0}Start", state);
+            playerStateEnd = string.Format("PlayerState{0}End", state);
+            playerStateUpdate = string.Format("PlayerState{0}Update", state);
 
-            switch (playerState)
-            {
-                case STATE_STOPPED:
-                    PlayerStateStoppedStart();
-                    break;
-                case STATE_GROUNDED:
-                    PlayerStateGroundedStart();
-                    break;
-                case STATE_AERIAL:
-                    PlayerStateAerialStart();
-                    break;
-                case STATE_WALLRIDE:
-                    PlayerStateWallrideStart();
-                    break;
-                case STATE_SNAPPING:
-                    PlayerStateSnappingStart();
-                    break;
-                case STATE_GRINDING:
-                    PlayerStateGrindingStart();
-                    break;
-            }
+            SendCustomEvent(playerStateStart);
         }
 
-        protected virtual void PlayerStateStoppedStart()
+        public virtual void PlayerStateStoppedStart()
         {
             RemovePlayerProperties();
             localPlayer.SetVelocity(Vector3.zero);
         }
 
-        protected virtual void PlayerStateStoppedEnd()
+        public virtual void PlayerStateStoppedEnd()
         {
             if (accelerationEnabled)
             {
@@ -312,7 +262,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateGroundedStart()
+        public virtual void PlayerStateGroundedStart()
         {
             ApplyPlayerProperties();
             ApplyPlayerGravity();
@@ -341,7 +291,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateGroundedUpdate()
+        public virtual void PlayerStateGroundedUpdate()
         {
             // switch to aerial state
             if (!localPlayer.IsPlayerGrounded())
@@ -375,7 +325,11 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateAerialStart()
+        public virtual void PlayerStateGroundedEnd()
+        {
+        }
+
+        public virtual void PlayerStateAerialStart()
         {
             if (wallJumpInputCooldownRemaining <= 0.0f)
             { 
@@ -392,7 +346,7 @@ namespace Airtime.Player.Movement
             aerialJumped = true;
         }
 
-        protected virtual void PlayerStateAerialUpdate()
+        public virtual void PlayerStateAerialUpdate()
         {
             // tick down grinding cooldown timer so we can start grinding again
             if (grindingCooldownRemaining > 0.0f)
@@ -573,13 +527,13 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateAerialEnd()
+        public virtual void PlayerStateAerialEnd()
         {
             wallJumpInputCooldownActive = false;
             wallJumpInputCooldownRemaining = 0.0f;
         }
 
-        protected virtual void PlayerStateWallrideStart()
+        public virtual void PlayerStateWallrideStart()
         {
             ApplyPlayerProperties();
             ApplyPlayerGravity();
@@ -591,7 +545,7 @@ namespace Airtime.Player.Movement
             grindingCooldownRemaining = 0.0f;
         }
 
-        protected virtual void PlayerStateWallrideUpdate()
+        public virtual void PlayerStateWallrideUpdate()
         {
             // tick down walljump cooldown timer so we can walljump again
             if (wallJumpCooldownRemaining > 0.0f)
@@ -681,7 +635,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateWallrideEnd()
+        public virtual void PlayerStateWallrideEnd()
         {
             // extra time from coming off a wall where a walljump is still valid
             wallJumpTimeRemaining = wallJumpTime;
@@ -693,7 +647,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateSnappingStart()
+        public virtual void PlayerStateSnappingStart()
         {
             RemovePlayerProperties();
             RemovePlayerGravity();
@@ -711,7 +665,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateSnappingUpdate()
+        public virtual void PlayerStateSnappingUpdate()
         {
             // jump from grind
             if (inputManager.GetJumpDown())
@@ -751,7 +705,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateSnappingEnd()
+        public virtual void PlayerStateSnappingEnd()
         {
             // use to play a nice sound effect
             SendOptionalCustomEvent("_StartGrind");
@@ -761,7 +715,7 @@ namespace Airtime.Player.Movement
             grindingTurnCooldownRemaining = 0.0f;
         }
 
-        protected virtual void PlayerStateGrindingStart()
+        public virtual void PlayerStateGrindingStart()
         {
             RemovePlayerProperties();
             RemovePlayerGravity();
@@ -779,7 +733,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateGrindingUpdate()
+        public virtual void PlayerStateGrindingUpdate()
         {
             // jump from grind
             if (inputManager.GetJumpDown())
@@ -898,7 +852,7 @@ namespace Airtime.Player.Movement
             }
         }
 
-        protected virtual void PlayerStateGrindingEnd()
+        public virtual void PlayerStateGrindingEnd()
         {
             // use this to play a nice effect
             SendOptionalCustomEvent("_StopGrind");
@@ -943,7 +897,7 @@ namespace Airtime.Player.Movement
 
         public void EndGrind(float cooldown)
         {
-            if (playerState == STATE_SNAPPING || playerState == STATE_GRINDING)
+            if (GetPlayerState() == STATE_SNAPPING || GetPlayerState() == STATE_GRINDING)
             {
                 grindingCooldownRemaining = cooldown;
 
@@ -987,7 +941,7 @@ namespace Airtime.Player.Movement
         {
             if (localPlayerCached)
             {
-                if (playerState == STATE_GRINDING)
+                if (GetPlayerState() == STATE_GRINDING)
                 {
                     return trackSpeed;
                 }
@@ -1008,7 +962,7 @@ namespace Airtime.Player.Movement
 
             if (velocity > 0.0)
             {
-                if (playerState == STATE_GRINDING)
+                if (GetPlayerState() == STATE_GRINDING)
                 {
                     return Mathf.Clamp01(velocity / grindMaxSpeed);
                 }

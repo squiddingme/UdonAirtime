@@ -21,14 +21,13 @@ namespace Airtime.Player.Movement
 
         [HideInInspector] public int trackLayer = 0;
 
-        // Player States (we have to keep a copy here because of udon)
-        public const int STATE_STOPPED = 0;
-        public const int STATE_GROUNDED = 1;
-        public const int STATE_AERIAL = 2;
-        public const int STATE_WALLRIDE = 3;
-        public const int STATE_SNAPPING = 4;
-        public const int STATE_GRINDING = 5;
-        public const int STATE_CUSTOM = 6;
+        // Built-in Player States
+        public const string STATE_STOPPED = "Stopped";
+        public const string STATE_GROUNDED = "Grounded";
+        public const string STATE_AERIAL = "Aerial";
+        public const string STATE_WALLRIDE = "Wallride";
+        public const string STATE_SNAPPING = "Snapping";
+        public const string STATE_GRINDING = "Grinding";
 
         public void Start()
         {
