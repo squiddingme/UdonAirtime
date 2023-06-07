@@ -48,7 +48,7 @@ namespace Airtime.Track
         [SerializeField] [HideInInspector] public float sampledNormalsDistance = 0.5f;
         [SerializeField] [HideInInspector] public float sampledNormalsStraightening = 1.5f;
 #endif
-        [SerializeField] [HideInInspector] public Vector3[] sampledNormals;
+        [SerializeField][HideInInspector] public Vector3[] sampledNormals = new Vector3[0];
 
         [SerializeField] [HideInInspector] public float cachedDistance = 0.0f;
 
@@ -65,6 +65,8 @@ namespace Airtime.Track
             rolls = new float[] { 0f, 0f };
 
             modes = new int[] { 0, 0 };
+
+            sampledNormals = new Vector3[0];
         }
 
         public void ResetRolls()
@@ -553,7 +555,7 @@ namespace Airtime.Track
 
         public Vector3 GetInterpolatedNormal(float t)
         {
-            if (sampledNormals == null)
+            if (sampledNormals.Length == 0)
             {
                 return Vector3.up;
             }
@@ -951,7 +953,7 @@ namespace Airtime.Track
             if (GUILayout.Button("1. Generate Cached Normals"))
             {
                 // clear sampled normals
-                if (track.sampledNormals != null)
+                if (track.sampledNormals.Length > 0)
                 {
                     ClearSampledNormals(track);
                 }
@@ -961,7 +963,7 @@ namespace Airtime.Track
 
             if (GUILayout.Button("Clear Cached Normals"))
             {
-                if (track.sampledNormals == null)
+                if (track.sampledNormals.Length == 0)
                 {
                     Debug.LogWarning("There are no cached normals.");
                 }
@@ -1177,7 +1179,7 @@ namespace Airtime.Track
         {
             Undo.RecordObject(track, "Clear Cached Normals");
 
-            track.sampledNormals = null;
+            track.sampledNormals = new Vector3[0];
 
             EditorUtility.SetDirty(track);
         }
