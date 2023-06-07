@@ -1082,6 +1082,7 @@ namespace Airtime.Track
             else
             {
                 Undo.RecordObject(track, "Generate Sample Points");
+                int id = Undo.GetCurrentGroup();
 
                 int count = Mathf.RoundToInt(track.cachedDistance / track.samplePointDistance) + 1;
                 track.samplePoints = new GameObject[count];
@@ -1111,12 +1112,15 @@ namespace Airtime.Track
                     // store time value so a collision can also find the right point on the spline
                     track.samplePointsT[i] = Mathf.Clamp01(track.GetTimeByDistance(position));
 
+                    Undo.RegisterCreatedObjectUndo(g, "Generate Sample Points");
+
                     float arcNextTrackPosition = position + track.samplePointDistance;
                     float multiplier = track.samplePointDistance / Vector3.Distance(track.GetPointByDistance(position), track.GetPointByDistance(arcNextTrackPosition));
                     position += track.samplePointDistance * multiplier;
                 }
 
                 EditorUtility.SetDirty(track);
+                Undo.CollapseUndoOperations(id);
             }
         }
 
