@@ -281,8 +281,18 @@ namespace Airtime.Player.Movement
                 float magnitude = localPlayerVelocity.magnitude;
                 if (magnitude < bunnyhopMaxSpeed)
                 {
-                    magnitude = Mathf.Clamp(magnitude + bunnyhopSpeedBoost, 0.0f, bunnyhopMaxSpeed);
-                    localPlayerVelocity = localPlayerVelocity.normalized * magnitude;
+                    Vector3 localInput3D = localPlayerRotation * input3D;
+
+                    if (magnitude + bunnyhopSpeedBoost > bunnyhopMaxSpeed)
+                    {
+                        magnitude = magnitude + bunnyhopSpeedBoost - bunnyhopMaxSpeed;
+                    }
+                    else
+                    {
+                        magnitude = bunnyhopSpeedBoost;
+                    }
+
+                    localPlayerVelocity = localPlayerVelocity + (localInput3D * magnitude);
                 }
 
                 // jump
