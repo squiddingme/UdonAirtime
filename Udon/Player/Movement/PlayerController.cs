@@ -34,9 +34,14 @@ namespace Airtime.Player.Movement
         [Tooltip("Minimum speed (as percentage of maximum speed) as soon as the player starts moving.")] [Range(0.0f, 1.0f)] public float accelerationMinimum = 0.2f;
 
         [Header("Custom Jump Properties")]
-        [Tooltip("Vertical speed threshold that is considered a jump event")] public float jumpSpeedThreshold = 0.2f;
+        [Tooltip("Vertical speed threshold that is considered a jump event")] public float jumpSpeedThreshold = 0.4f;
         [Tooltip("Extra time (in seconds) the player can hold the jump button for a higher jump")] public float bonusJumpTime = 0.0f;
         [Tooltip("Extra time after dropping off a platform that the player can still jump (coyote time)")] public float ledgeJumpTime = 0.1f;
+
+        [Header("Jump Buffering")]
+        [Tooltip("Enable Quake-like buffered jump inputs")] public bool jumpBufferingEnabled = true;
+        [Tooltip("Speed increase for each bunnyhopping")] public float bunnyhopSpeedBoost = 0.0f;
+        [Tooltip("Maximum speed before bunnyhop speed boosts aren't applied anymore")] public float bunnyhopMaxSpeed = 10.0f;
 
         [Header("Double Jump Properties")]
         [Tooltip("Allow double jumping")] public bool doubleJumpEnabled = false;
@@ -118,6 +123,7 @@ namespace Airtime.Player.Movement
         protected Vector3 input3D = Vector3.zero;
         protected bool inputJumped = false;
         protected bool inputDoubleJumped = true;
+        protected bool inputJumpBuffered = false;
         protected bool inputTurned = false;
 
         // STATE_GROUNDED
@@ -267,6 +273,25 @@ namespace Airtime.Player.Movement
             ApplyPlayerProperties();
             ApplyPlayerGravity();
 
+            // quake-style jump buffering
+            if (jumpBufferingEnabled && inputJumpBuffered && inputManager.GetJump())
+            {
+                // bunnyhop speed boost
+                localPlayerVelocity.y = 0;
+                float magnitude = localPlayerVelocity.magnitude;
+                if (magnitude < bunnyhopMaxSpeed)
+                {
+                    magnitude = Mathf.Clamp(magnitude + bunnyhopSpeedBoost, 0.0f, bunnyhopMaxSpeed);
+                    localPlayerVelocity = localPlayerVelocity.normalized * magnitude;
+                }
+
+                // jump
+                localPlayerVelocity.y = jumpImpulse;
+                localPlayer.SetVelocity(localPlayerVelocity);
+
+                SetPlayerState(STATE_AERIAL);
+            }
+
             // set coyote time
             ledgeJumpTimeRemaining = ledgeJumpTime;
 
@@ -343,6 +368,7 @@ namespace Airtime.Player.Movement
                 SendOptionalCustomEvent("_Jump");
             }
 
+            inputJumpBuffered = false;
             aerialJumped = true;
         }
 
@@ -495,8 +521,12 @@ namespace Airtime.Player.Movement
                 // special jumps
                 if (inputManager.GetJumpDown() && bonusJumpTimeRemaining <= 0.0f)
                 {
+                    if (!doubleJumpEnabled)
+                    {
+                        inputJumpBuffered = true;
+                    }
                     // double jump
-                    if (doubleJumpEnabled && !inputDoubleJumped)
+                    else if (doubleJumpEnabled && !inputDoubleJumped)
                     {
                         localPlayerVelocity.y = doubleJumpImpulse;
                         bonusJumpTimeRemaining = bonusJumpTime;
@@ -505,6 +535,10 @@ namespace Airtime.Player.Movement
 
                         // use to play a nice effect
                         SendOptionalCustomEvent("_DoubleJump");
+                    }
+                    else if (doubleJumpEnabled && inputDoubleJumped)
+                    {
+                        inputJumpBuffered = true;
                     }
                 }
 
