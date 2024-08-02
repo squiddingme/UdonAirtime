@@ -100,6 +100,8 @@ namespace Airtime.Player.Movement
         protected bool localPlayerCached = false;
         protected Vector3 localPlayerPosition = Vector3.zero;
         protected Quaternion localPlayerRotation = Quaternion.identity;
+        protected Vector3 localOriginPosition = Vector3.zero;
+        protected Quaternion localOriginRotation = Quaternion.identity;
         protected Vector3 localPlayerVelocity = Vector3.zero;
         protected Vector3 localPlayerCenter = Vector3.up * 0.5f;
         protected Vector3 localPlayerCapsuleA = Vector3.up * 0.25f;
@@ -145,7 +147,6 @@ namespace Airtime.Player.Movement
 
         // STATE_GRINDING
         protected float trackSnapTimer = 0.0f;
-        protected float previousTrackPosition = 0.0f;
         protected float trackSpeed = 0.0f;
         protected Vector3 currentTrackVelocity = Vector3.forward;
         protected Quaternion currentTrackOrientation = Quaternion.identity;
@@ -172,7 +173,9 @@ namespace Airtime.Player.Movement
                 input3D = inputManager.GetDirection3D();
 
                 localPlayerPosition = localPlayer.GetPosition();
+                localOriginPosition = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Origin).position;
                 localPlayerRotation = localPlayer.GetRotation();
+                localOriginRotation = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Origin).rotation;
                 localPlayerVelocity = localPlayer.GetVelocity();
 
                 if (GetPlayerState() != STATE_STOPPED)
@@ -739,7 +742,12 @@ namespace Airtime.Player.Movement
                 if (trackSnapTimer > 0.0f)
                 {
                     Vector3 target = Vector3.Lerp(localPlayerPosition, walker.GetPoint(), trackSnapTimer / trackSnapTime);
-                    localPlayer.SetVelocity((target - localPlayerPosition) / Time.deltaTime);
+
+#if !UNITY_EDITOR
+                    localPlayer.TeleportTo(target, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+#else
+                    localPlayer.TeleportTo(target, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+#endif
 
                     if (trackSnapTimer >= trackSnapTime)
                     {
@@ -788,6 +796,14 @@ namespace Airtime.Player.Movement
                 localPlayerVelocity = walker.trackDirection * (walker.track.GetVelocityByDistance(walker.trackPosition).normalized * trackSpeed);
                 localPlayerVelocity.y = grindJumpImpulse;
                 bonusJumpTimeRemaining = bonusJumpTime;
+
+                // one last teleport to be in the correct position
+                Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
+#if !UNITY_EDITOR
+                localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+#else
+                localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+#endif
 
                 localPlayer.SetVelocity(localPlayerVelocity);
 
@@ -855,7 +871,6 @@ namespace Airtime.Player.Movement
                 }
 
                 // compute the next track position as a constant speed by using the distance as a multiplier
-                previousTrackPosition = walker.trackPosition;
                 Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
 
                 // disconnect from track but maintain speed
@@ -882,16 +897,11 @@ namespace Airtime.Player.Movement
                 // move forward using constant speed
                 else
                 {
-                    // undeltatime to "teleport"
-                    if (Vector3.Distance(localPlayer.GetPosition(), nextTrackPoint) <= grindTeleportDistance)
-                    {
-                        localPlayer.SetVelocity((nextTrackPoint - localPlayerPosition) / Time.deltaTime);
-                    }
-                    // too far away -- e.g. we got stuck in an obstacle, so actually force a teleport
-                    else
-                    {
-                        localPlayer.TeleportTo(nextTrackPoint, localPlayerRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
-                    }
+#if !UNITY_EDITOR
+                        localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+#else
+                        localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+#endif
                 }
             }
         }
