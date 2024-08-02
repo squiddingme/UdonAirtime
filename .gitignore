@@ -1,5 +1,6 @@
 *.meta
 *.unity
 *.prefab
+*.lighting
 Assets/*
 Demo Scene/*
