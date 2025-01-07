@@ -742,6 +742,7 @@ namespace Airtime.Player.Movement
                 if (trackSnapTimer > 0.0f)
                 {
                     Vector3 target = Vector3.Lerp(localPlayerPosition, walker.GetPoint(), trackSnapTimer / trackSnapTime);
+                    target = target + (localOriginPosition - localPlayerPosition);
 
 #if !UNITY_EDITOR
                     localPlayer.TeleportTo(target, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
@@ -799,6 +800,8 @@ namespace Airtime.Player.Movement
 
                 // one last teleport to be in the correct position
                 Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
+                nextTrackPoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
+
 #if !UNITY_EDITOR
                 localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
 #else
@@ -872,6 +875,7 @@ namespace Airtime.Player.Movement
 
                 // compute the next track position as a constant speed by using the distance as a multiplier
                 Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
+                nextTrackPoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
 
                 // disconnect from track but maintain speed
                 if (walker.GetIsDone())
