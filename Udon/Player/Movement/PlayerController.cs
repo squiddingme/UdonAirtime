@@ -89,8 +89,10 @@ namespace Airtime.Player.Movement
         [Tooltip("Force of analog stick before switching directions")] [Range(0.0f, 1.1f)] public float grindTurnDeadzone = 0.9f;
         [Tooltip("Wait period before you can turn around, use to prevent network spamming")] public float grindTurnCooldown = 0.2f;
         [Tooltip("Angle of analog stick direction to switch directions")] [Range(0.0f, 360.0f)] public float grindTurnAngle = 120.0f;
-        [Tooltip("If we exceed this distance, deem the player 'stuck' and teleport them to where they're supposed to be")] public float grindTeleportDistance = 10.0f;
         [Tooltip("Grinding temporarily disables the rail game object. Usually desired, since you can use it to disable colliders.")] public bool grindingDisablesRail = true;
+        [Tooltip("Actively prevents the player from clipping through objects while grinding. Helps prevent the player from getting out of map boundary.")] public bool grindingCollisionPrevention = true;
+        [Tooltip("Time, in seconds, before the player gets kicked off the rail from colliding with an object for too long")] public float grindingCollisionTime = 0.5f;
+        [Tooltip("Size of capsule collision prevention check")] public float grindingCollisionSize = 0.215f;
 
         [Header("Track Properties")]
         [Tooltip("Time it takes to snap to a rail when first touching it, in seconds")] public float trackSnapTime = 0.08f;
@@ -106,6 +108,7 @@ namespace Airtime.Player.Movement
         protected Vector3 localPlayerCenter = Vector3.up * 0.5f;
         protected Vector3 localPlayerCapsuleA = Vector3.up * 0.25f;
         protected Vector3 localPlayerCapsuleB = Vector3.up * 1.5f;
+        protected int localPlayerMask = 0;
 
         // Built-in Player States
         public const string STATE_STOPPED = "Stopped";
@@ -152,6 +155,9 @@ namespace Airtime.Player.Movement
         protected Quaternion currentTrackOrientation = Quaternion.identity;
         protected float grindingCooldownRemaining = 0.0f;
         protected float grindingTurnCooldownRemaining = 0.0f;
+        protected Collider[] grindingColliders;
+        protected float grindingCollisionTimer = 0.0f;
+        protected Vector3 grindingLastSafePosition = Vector3.zero;
 
         // Event Handling
         protected UdonBehaviour eventHandler;
@@ -163,6 +169,16 @@ namespace Airtime.Player.Movement
             if (localPlayer != null)
             {
                 localPlayerCached = true;
+            }
+
+            grindingColliders = new Collider[5];
+
+            for (int i = 0; i < 32; i++)
+            {
+                if (!Physics.GetIgnoreLayerCollision(9, i))
+                {
+                    localPlayerMask |= 1 << i;
+                }
             }
         }
 
@@ -784,6 +800,8 @@ namespace Airtime.Player.Movement
             {
                 inputDoubleJumped = false;
             }
+
+            grindingLastSafePosition = localPlayerPosition;
         }
 
         public virtual void PlayerStateGrindingUpdate()
@@ -901,11 +919,60 @@ namespace Airtime.Player.Movement
                 // move forward using constant speed
                 else
                 {
+                    // prevent the player from intersecting with colliders so that dismounting won't potentially clip the player out of bounds
+                    if (grindingCollisionPrevention)
+                    {
+                        int count = Physics.OverlapCapsuleNonAlloc(nextTrackPoint + localPlayerCapsuleA, nextTrackPoint + localPlayerCapsuleB, grindingCollisionSize, grindingColliders, localPlayerMask, QueryTriggerInteraction.Ignore);
+                        if (count < 1)
+                        {
+#if !UNITY_EDITOR
+                            localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+#else
+                            localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+#endif
+
+                            grindingCollisionTimer = 0.0f;
+                            grindingLastSafePosition = nextTrackPoint;
+                        }
+                        else
+                        {
+#if !UNITY_EDITOR
+                            localPlayer.TeleportTo(grindingLastSafePosition, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+#else
+                            localPlayer.TeleportTo(grindingLastSafePosition, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+#endif
+
+                            grindingCollisionTimer += Time.deltaTime;
+
+                            // kick the player off the rail if they've gotten stuck on something for too long
+                            if (grindingCollisionTimer >= grindingCollisionTime)
+                            {
+                                // use a cooldown so we don't immediately start grinding from the same position
+                                grindingCooldownRemaining = grindJumpCooldown;
+
+                                localPlayerVelocity = Vector3.zero;
+                                localPlayer.SetVelocity(localPlayerVelocity);
+
+                                // re-enable game object
+                                if (grindingDisablesRail)
+                                {
+                                    walker.track.gameObject.SetActive(true);
+                                }
+
+                                aerialJumped = false;
+
+                                SetPlayerState(STATE_AERIAL);
+                            }
+                        }
+                    }
+                    else
+                    {
 #if !UNITY_EDITOR
                         localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
 #else
                         localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
 #endif
+                    }
                 }
             }
         }
@@ -916,6 +983,7 @@ namespace Airtime.Player.Movement
             SendOptionalCustomEvent("_StopGrind");
 
             grindingTurnCooldownRemaining = 0.0f;
+            grindingCollisionTimer = 0.0f;
         }
 
         public void StartGrind(BezierTrack track, int samplePoint)
