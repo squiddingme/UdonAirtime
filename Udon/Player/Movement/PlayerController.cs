@@ -175,7 +175,7 @@ namespace Airtime.Player.Movement
 
             for (int i = 0; i < 32; i++)
             {
-                if (!Physics.GetIgnoreLayerCollision(9, i))
+                if (!Physics.GetIgnoreLayerCollision(10, i))
                 {
                     localPlayerMask |= 1 << i;
                 }
