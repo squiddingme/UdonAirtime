@@ -807,7 +807,7 @@ namespace Airtime.Player.Movement
         public virtual void PlayerStateGrindingUpdate()
         {
             // jump from grind
-            if (inputManager.GetJumpDown())
+            if (inputManager.GetJumpDown() && grindingCollisionTimer <= 0.0f)
             {
                 // use a cooldown so we don't immediately start grinding from the same position
                 grindingCooldownRemaining = grindJumpCooldown;
