@@ -2,9 +2,8 @@
 An expressive movement system for VRChat. Includes variable jump height, double jumping, wall riding, wall jumping, and rail grinding via an Udon-powered bézier curve implementation.
 
 ## Requirements
-* Unity 2019.4.x
-* VRCSDK3 (Minimum 3.0.9 from VCC)
-* UdonSharp (Minimum 1.0.1 from VCC)
+* Unity 2022.3.22f1
+* VRCSDK3 (Minimum 3.8.0 from VCC)
 * (Optional) [CyanPlayerObjectPool](https://github.com/CyanLaser/CyanPlayerObjectPool)
 
 ## Download
