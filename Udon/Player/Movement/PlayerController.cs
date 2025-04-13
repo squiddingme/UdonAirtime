@@ -818,12 +818,12 @@ namespace Airtime.Player.Movement
 
                 // one last teleport to be in the correct position
                 Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
-                nextTrackPoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
+                Vector3 nextPlayspacePoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
 
 #if !UNITY_EDITOR
-                localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+                localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
 #else
-                localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+                localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
 #endif
 
                 localPlayer.SetVelocity(localPlayerVelocity);
@@ -893,7 +893,7 @@ namespace Airtime.Player.Movement
 
                 // compute the next track position as a constant speed by using the distance as a multiplier
                 Vector3 nextTrackPoint = walker.GetPointAfterDistance(trackSpeed);
-                nextTrackPoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
+                Vector3 nextPlayspacePoint = nextTrackPoint + (localOriginPosition - localPlayerPosition);
 
                 // disconnect from track but maintain speed
                 if (walker.GetIsDone())
@@ -926,13 +926,13 @@ namespace Airtime.Player.Movement
                         if (count < 1)
                         {
 #if !UNITY_EDITOR
-                            localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+                            localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
 #else
-                            localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+                            localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
 #endif
 
                             grindingCollisionTimer = 0.0f;
-                            grindingLastSafePosition = nextTrackPoint;
+                            grindingLastSafePosition = nextPlayspacePoint;
                         }
                         else
                         {
@@ -968,9 +968,9 @@ namespace Airtime.Player.Movement
                     else
                     {
 #if !UNITY_EDITOR
-                        localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
+                        localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.AlignRoomWithSpawnPoint, true);
 #else
-                        localPlayer.TeleportTo(nextTrackPoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
+                        localPlayer.TeleportTo(nextPlayspacePoint, localOriginRotation, VRC_SceneDescriptor.SpawnOrientation.Default, true);
 #endif
                     }
                 }
