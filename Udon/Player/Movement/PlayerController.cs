@@ -582,11 +582,34 @@ namespace Airtime.Player.Movement
                     ApplyPlayerPropertiesWithAcceleration();
                 }
 
-                // apply our velocity changes
-                // workaround so you can test airtime in clientsim (but you won't be able to double jump or anything cool)
-#if !UNITY_EDITOR
-                localPlayer.SetVelocity(localPlayerVelocity);
+                // new workaround for clientsim: clientsim does not apply movement or gravity on the same frame you SetVelocity, so lets just do it here
+#if UNITY_EDITOR
+                Vector2 speed = new Vector2(Networking.LocalPlayer.GetRunSpeed(), Networking.LocalPlayer.GetStrafeSpeed());
+                Vector2 input = inputManager.GetDirection();
+                Vector3 forward = localPlayerRotation * Vector3.forward;
+                Vector3 right = localPlayerRotation * Vector3.right;
+
+                Vector3 desiredMove = input.y * speed.x * forward + input.x * speed.y * right;
+                desiredMove.y = 0.0f;
+
+                Vector3 localVelocity = Quaternion.Inverse(localPlayerRotation) * localPlayerVelocity;
+                localVelocity.x = Mathf.Clamp(localVelocity.x, -speed.y, speed.y);
+                localVelocity.z = Mathf.Clamp(localVelocity.z, -speed.x, speed.x);
+
+                Vector3 maxAc = new Vector3(speed.y - localVelocity.x, 0, speed.x - localVelocity.z);
+                Vector3 minAc = new Vector3(-speed.y - localVelocity.x, 0, -speed.x - localVelocity.z);
+
+                Vector3 inputAcceleration = Time.fixedDeltaTime * 5f * new Vector3(input.x * speed.y, 0, input.y * speed.x);
+                inputAcceleration.x = Mathf.Clamp(inputAcceleration.x, minAc.x, maxAc.x);
+                inputAcceleration.z = Mathf.Clamp(inputAcceleration.z, minAc.z, maxAc.z);
+
+                localPlayerVelocity += localPlayerRotation * inputAcceleration;
+
+                float gravityContribution = Networking.LocalPlayer.GetGravityStrength() * Time.fixedDeltaTime * Physics.gravity.y;
+                localPlayerVelocity.y += gravityContribution;
 #endif
+
+                localPlayer.SetVelocity(localPlayerVelocity);
             }
         }
 
